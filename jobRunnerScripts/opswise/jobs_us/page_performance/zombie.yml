@@ -1,0 +1,12 @@
+context:
+  db_name: clive
+
+get_weblogs_data:
+  class: HiveTask
+  configuration:
+    hql_file: ${base_dir}/hql/getWeblogs.hql
+
+get_boomerang_tp:
+  class: HiveTask
+  configuration:
+    hql_file: ${base_dir}/hql/getBoomerangTP.hql

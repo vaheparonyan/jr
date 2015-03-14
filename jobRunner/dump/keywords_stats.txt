@@ -1,0 +1,219 @@
+en_US	boston things to do	4400	0.72	0.13
+en_US	bikram yoga boston	2400	1.88	0.09
+en_US	comedy in boston	320	1.81	0.29
+en_US	bowling las vegas	1600	1.87	0.16
+en_US	romantic things to do in las vegas	480	4.7	0.14
+en_US	los angeles comedy	210	0.3	0.03
+en_US	bowling san diego	2400	1.64	0.09
+en_US	things to do with kids in chicago	1300	2.56	0.31
+en_US	improv san diego	260	2.22	0.24
+en_US	laser tag in chicago	260	1.68	0.68
+en_US	yoga seattle	2400	3.02	0.44
+en_US	indoor water parks in new york	480	1.11	0.75
+en_US	water parks in los angeles	880	1.06	0.18
+en_US	bikram yoga los angeles	720	2.52	0.17
+en_US	bowling alleys in san diego	390	1.87	0.22
+en_US	romantic things to do in washington dc	210	1.62	0.22
+en_US	ashtanga yoga los angeles	320	0.6	0.17
+en_US	chicago improv	2900	1.05	0.01
+en_US	things to do los angeles	1900	0.84	0.08
+en_US	things to do new york	1000	1.28	0.27
+en_US	washington dc things to do	3600	1.36	0.12
+en_US	laser tag los angeles	1600	1.68	0.12
+en_US	comedy seattle	480	1.79	0.25
+en_US	things to do seattle	1900	1.5	0.08
+en_US	bowling alley san diego	260	2.62	0.08
+en_US	new york water parks	320	2.06	0.39
+en_US	laser tag chicago	2400	1.47	0.49
+en_US	los angeles water parks	320	2.11	0.17
+en_US	boston yoga	480	2.12	0.11
+en_US	things to do this weekend in san diego	260	1.22	0.38
+en_US	things to do today in boston	260	2.03	0.2
+en_US	water parks in new york	880	1.58	0.63
+en_US	improv san francisco	390	2.2	0.39
+en_US	water parks in san diego	880	1.74	0.6
+en_US	las vegas fun things to do	210	3.05	0.28
+en_US	bowling new york	480	1.04	0.16
+en_US	chicago things to do today	480	1.76	0.26
+en_US	things to do with kids in san francisco	880	1.01	0.36
+en_US	things to do in san francisco	110000	1.01	0.2
+en_US	los angeles things to do	2900	0.89	0.07
+en_US	hot yoga seattle	720	1.89	0.41
+en_US	bowling alley los angeles	590	0.0	0.04
+en_US	bowling in las vegas	320	1.28	0.37
+en_US	ashtanga yoga boston	210	4.22	0.17
+en_US	yoga san diego	1900	2.98	0.71
+en_US	bowling in san francisco	390	0.2	0.02
+en_US	things to do in seattle	74000	0.64	0.12
+en_US	new york things to do	2900	1.03	0.32
+en_US	boston things to do this weekend	320	1.49	0.17
+en_US	las vegas yoga	590	2.03	0.25
+en_US	chicago stand up comedy	260	2.42	0.06
+en_US	san diego things to do	6600	0.89	0.11
+en_US	chicago bowling	480	0.88	0.05
+en_US	things to do this weekend in boston	210	1.67	0.17
+en_US	things to do this weekend in chicago	480	1.7	0.3
+en_US	san diego fun things to do	260	1.89	0.12
+en_US	yoga in boston	260	3.78	0.58
+en_US	bowling alley san francisco	320	0.0	0.0
+en_US	fun things to do in washington dc	1000	1.33	0.16
+en_US	laser tag san diego	2400	3.08	0.21
+en_US	comedy las vegas	390	1.39	0.43
+en_US	kundalini yoga boston	590	0.43	0.36
+en_US	stand up comedy chicago	720	2.27	0.09
+en_US	water parks in las vegas	1300	1.18	0.39
+en_US	things to do chicago	2400	1.34	0.15
+en_US	bowling alley seattle	390	0.0	0.05
+en_US	things to do today in los angeles	480	0.99	0.22
+en_US	water parks las vegas	320	0.85	0.35
+en_US	improv boston	3600	1.1	0.09
+en_US	comedy in san francisco	210	2.1	0.12
+en_US	things to do this weekend in los angeles	480	0.83	0.22
+en_US	seattle comedy	590	2.01	0.2
+en_US	things to do with kids in las vegas	1300	1.72	0.26
+en_US	laser tag las vegas	1900	0.67	0.14
+en_US	water parks los angeles	320	3.3	0.18
+en_US	things to do with kids in los angeles	1300	1.3	0.34
+en_US	las vegas comedy	390	1.28	0.44
+en_US	yoga in chicago	320	2.32	0.59
+en_US	things to do washington dc	1600	1.7	0.12
+en_US	romantic things to do in los angeles	720	1.39	0.07
+en_US	bowling seattle	1300	0.78	0.04
+en_US	roller coasters in las vegas	880	2.63	0.3
+en_US	bowling alley chicago	1000	1.6	0.03
+en_US	kundalini yoga seattle	210	2.01	0.41
+en_US	fun things to do in seattle	4400	1.09	0.06
+en_US	improv chicago	2900	1.23	0.08
+en_US	fun things to do in toronto	320	2.41	0.1
+en_US	things to do with kids in boston	880	1.26	0.25
+en_US	san francisco fun things to do	210	1.53	0.18
+en_US	things to do in new york	18100	1.08	0.34
+en_US	bowling san francisco	1600	0.0	0.01
+en_US	boston bowling	590	0.67	0.01
+en_US	indoor amusement parks in chicago	260	2.13	0.26
+en_US	fun things to do in san francisco	4400	1.91	0.18
+en_US	las vegas water parks	390	1.16	0.29
+en_US	yoga new york	1900	4.56	0.64
+en_US	water parks san diego	320	1.68	0.44
+en_US	seattle yoga	590	2.76	0.43
+en_US	las vegas roller coasters	720	2.61	0.28
+en_US	hot yoga san francisco	720	1.97	0.42
+en_US	things to do san diego	2400	1.1	0.1
+en_US	las vegas things to do	4400	1.37	0.33
+en_US	bikram yoga las vegas	2400	1.3	0.08
+en_US	things to do san francisco	2400	1.37	0.2
+en_US	hot yoga los angeles	480	1.59	0.31
+en_US	washington dc things to do this weekend	260	2.06	0.21
+en_US	chicago things to do	5400	1.36	0.19
+en_US	things to do las vegas	1600	0.95	0.33
+en_US	improv los angeles	590	0.58	0.01
+en_US	fun things to do in new york	1000	1.21	0.32
+en_US	seattle things to do	4400	0.87	0.1
+en_US	stand up comedy boston	320	2.08	0.1
+en_US	comedy in chicago	480	1.76	0.3
+en_US	romantic things to do in boston	480	2.92	0.14
+en_US	chicago bowling alleys	390	0.39	0.04
+en_US	romantic things to do in san francisco	880	2.27	0.21
+en_US	yoga in las vegas	260	1.41	0.71
+en_US	toronto things to do	1000	1.72	0.17
+en_US	comedy in los angeles	210	2.68	0.13
+en_US	boston comedy	880	1.98	0.15
+en_US	san francisco comedy	590	2.18	0.04
+en_US	bikram yoga san francisco	1000	2.52	0.29
+en_US	stand up comedy seattle	210	1.45	0.15
+en_US	san diego yoga	480	2.15	0.48
+en_US	yoga washington dc	1900	2.17	0.34
+en_US	improv seattle	390	0.99	0.16
+en_US	seattle bowling	390	1.52	0.01
+en_US	bikram yoga chicago	2900	1.82	0.15
+en_US	yoga las vegas	1600	2.84	0.33
+en_US	comedy chicago	1000	1.51	0.11
+en_US	things to do with kids in san diego	720	1.07	0.22
+en_US	bowling chicago	2900	1.38	0.06
+en_US	fun things to do in chicago	6600	1.16	0.2
+en_US	san diego things to do this weekend	320	0.96	0.32
+en_US	fun things to do in las vegas	2900	1.35	0.41
+en_US	romantic things to do in seattle	390	0.0	0.03
+en_US	things to do in toronto	18100	1.78	0.2
+en_US	fun things to do in san diego	5400	1.71	0.12
+en_US	chicago water parks	390	2.68	0.38
+en_US	chicago fun things to do	320	1.75	0.4
+en_US	things to do in washington dc	49500	1.37	0.16
+en_US	improv new york	210	3.03	0.1
+en_US	bikram yoga new york	480	2.71	0.25
+en_US	hot yoga las vegas	1000	1.61	0.12
+en_US	laser tag boston	1300	1.07	0.04
+en_US	bikram yoga seattle	1900	1.79	0.15
+en_US	san diego bowling	390	1.69	0.18
+en_US	improv las vegas	390	1.14	0.39
+en_US	kundalini yoga chicago	260	2.25	0.41
+en_US	things to do with kids in washington dc	320	1.47	0.13
+en_US	las vegas laser tag	210	1.13	0.13
+en_US	comedy boston	720	1.97	0.13
+en_US	things to do in las vegas	74000	1.33	0.4
+en_US	yoga boston	1300	2.79	0.3
+en_US	bowling alleys in chicago	480	1.61	0.16
+en_US	chicago yoga	480	5.11	0.23
+en_US	laser tag seattle	1300	1.01	0.09
+en_US	chicago comedy	1000	1.37	0.09
+en_US	things to do boston	1900	0.97	0.09
+en_US	laser tag in los angeles	260	1.46	0.27
+en_US	comedy los angeles	590	2.53	0.03
+en_US	las vegas bowling	320	1.3	0.23
+en_US	hot yoga boston	480	0.95	0.28
+en_US	bowling in los angeles	320	1.03	0.08
+en_US	new york yoga	2400	4.03	0.2
+en_US	things to do in los angeles	74000	0.93	0.09
+en_US	san diego improv	210	2.18	0.15
+en_US	bowling boston	1600	0.53	0.02
+en_US	things to do in boston	74000	0.79	0.16
+en_US	things to do in san diego	90500	0.96	0.13
+en_US	san francisco things to do	6600	1.3	0.24
+en_US	hot yoga san diego	480	1.42	0.6
+en_US	fun things to do in boston	5400	1.04	0.24
+en_US	improv washington dc	260	0.06	0.03
+en_US	bowling in chicago	590	1.42	0.14
+en_US	bowling in san diego	320	2.02	0.16
+en_US	bowling los angeles	880	5.49	0.02
+en_US	laser tag san francisco	480	1.16	0.17
+en_US	las vegas hot yoga	260	0.0	0.03
+en_US	ashtanga yoga new york	260	0.0	0.12
+en_US	san francisco bowling	260	0.54	0.01
+en_US	san francisco yoga	320	1.76	0.54
+en_US	things to do with kids in seattle	590	1.54	0.13
+en_US	stand up comedy los angeles	390	4.33	0.05
+en_US	san diego things to do today	320	1.48	0.19
+en_US	indoor water parks in chicago	880	2.11	0.8
+en_US	yoga chicago	2900	3.24	0.34
+en_US	seattle things to do today	210	1.1	0.13
+en_US	seattle fun things to do	210	1.34	0.11
+en_US	bowling in boston	480	1.17	0.02
+en_US	things to do today in chicago	320	2.17	0.18
+en_US	boston improv	720	0.71	0.09
+en_US	boston things to do today	480	1.66	0.1
+en_US	water parks in chicago	1600	1.97	0.44
+en_US	bowling alley in chicago	260	1.06	0.14
+en_US	chicago things to do this weekend	480	1.79	0.33
+en_US	things to do in chicago	110000	0.83	0.31
+en_US	candlepin bowling boston	480	2.6	0.01
+en_US	san francisco things to do today	260	1.71	0.22
+en_US	comedy san francisco	880	1.44	0.03
+en_US	bikram yoga san diego	1300	3.37	0.2
+en_US	comedy san diego	590	0.96	0.24
+en_US	romantic things to do in chicago	880	1.43	0.15
+en_US	seattle improv	390	0.95	0.14
+en_US	things to do today in san diego	320	2.67	0.16
+en_US	san diego laser tag	260	2.57	0.19
+en_US	things to do toronto	390	1.78	0.12
+en_US	romantic things to do in san diego	880	2.17	0.27
+en_US	yoga san francisco	4400	2.85	0.63
+en_US	san diego comedy	480	0.99	0.19
+en_US	new york comedy	390	1.76	0.3
+en_US	fun things to do in los angeles	2900	1.13	0.13
+en_US	yoga los angeles	1900	2.11	0.5
+en_US	hot yoga chicago	880	2.01	0.44
+en_US	san francisco improv	210	2.06	0.2
+en_US	san diego water parks	320	1.39	0.33
+en_US	comedy new york	390	1.35	0.27
+en_US	kundalini yoga los angeles	320	2.3	0.37
+en_US	yoga in san francisco	320	3.27	0.76

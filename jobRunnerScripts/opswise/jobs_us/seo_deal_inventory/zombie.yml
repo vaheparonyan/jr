@@ -1,0 +1,124 @@
+context:
+  host: seo-content-optimizer.snc1
+
+prepare_seo_deal_inventory:
+  class: ScriptTask
+  configuration:
+    script: ${base_dir}/shell/prepare_kb_indexed_pages.sh ${host}
+
+dump_seo_deal_inventory:
+  class: ScriptTask
+  dependencies:
+    - prepare_seo_deal_inventory  
+  configuration:
+    script: ssh ${host} "psql -d seogeo -U postgres -c \"COPY vpa_seo_deal_inventory to '/tmp/vpa_deal_inventory.tsv' (DELIMITER '|') \""
+
+copy_seo_deal_inventory:
+  class: ScriptTask
+  dependencies:
+    - dump_seo_deal_inventory
+  configuration:
+    script: scp ${host}:/tmp/vpa_deal_inventory.tsv ${base_dir}/csv/vpa_deal_inventory_${date_key}.tsv
+
+drop_table_log:
+  class: SQLExecute
+  settings:
+    try: 1
+  configuration:
+    db:
+      adapter: Teradata
+      dsn: tdwc_dsn
+    sql:
+     - DROP TABLE sandbox.temp_SDI_${date_key}_log;
+     - DROP TABLE sandbox.temp_SDI_${date_key}_UV;
+     - DROP TABLE sandbox.temp_SDI_${date_key}_ET;
+
+drop_table_temp:
+  class: SQLExecute
+  settings:
+    try: 1
+  configuration:
+    db:
+      adapter: Teradata
+      dsn: tdwc_dsn
+    sql:
+     - DROP TABLE sandbox.temp_SDI_${date_key};
+
+create_temp_table:
+  class: SQLExecute
+  dependencies:
+    - drop_table_log
+    - drop_table_temp
+  configuration:
+    db:
+      adapter: Teradata
+      dsn: tdwc_dsn
+    sql: |
+      CREATE MULTISET TABLE sandbox.temp_SDI_${date_key} ,NO FALLBACK ,
+          NO BEFORE JOURNAL,
+          NO AFTER JOURNAL,
+          CHECKSUM = DEFAULT,
+          DEFAULT MERGEBLOCKRATIO
+          (
+           page_id INTEGER,
+           url VARCHAR(2048) CHARACTER SET UNICODE CASESPECIFIC,
+           deal_count INTEGER,
+           merchant_count INTEGER,
+           merchant_with_desc INTEGER
+          );
+
+# TODO not sure why this job is necessary, will keep here for now to
+# make sure all tasks are being migrated, then we need to review this.
+twbrmcp:
+  class: ScriptTask
+  settings:
+    try: 1
+  configuration:
+    script: twbrmcp ${tdload_user}
+
+tdload:
+  class: ScriptTask
+  dependencies:
+    - create_temp_table
+    - copy_seo_deal_inventory
+  configuration:
+    script: tdload -f ${base_dir}/csv/vpa_deal_inventory_${date_key}.tsv -d "|" -t temp_SDI_${date_key} --TargetWorkingDatabase sandbox -h ${tdload_host} -u ${tdload_user} -p ${tdload_pass}
+
+deal_inventory_move_from_temporary:
+  class: SQLExecute
+  dependencies:
+    - tdload
+  configuration:
+    db:
+      adapter: Teradata
+      dsn: tdwc_dsn
+    sql_file: deal_inventory_move_from_temporary.sql
+
+grant_select_on_table:
+  class: SQLExecute
+  dependencies:
+    - deal_inventory_move_from_temporary
+  configuration:
+    db:
+      adapter: Teradata
+      dsn: tdwc_dsn
+    sql:
+     - GRANT SELECT ON sandbox.seo_deal_inventory TO PUBLIC;
+
+recreate_monthly_view:
+  class: SQLExecute
+  dependencies:
+    - deal_inventory_move_from_temporary
+  configuration:
+    db:
+      adapter: Teradata
+      dsn: tdwc_dsn
+    sql: |
+      replace view sandbox.kb_seo_deal_inventory_monthly as
+          select
+            datekey/100 as month_key, url as url,
+            avg(deal_count) as avg_daily_deal_count,
+            avg(merchant_count) as avg_daily_merchant_count,
+            avg(merchant_with_desc) as avg_daily_merch_w_desc_count
+          from sandbox.kb_seo_deal_inventory
+          group by month_key, url;

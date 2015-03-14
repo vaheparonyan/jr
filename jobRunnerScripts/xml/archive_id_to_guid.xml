@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<Knowledge_base>
+<job name="dropTable log" type="dropTable" command="vpa_archive_id_to_guid_log" 
+         region="int" connectionType="teradata" onerror="Ignore">
+        <parameters>
+            <keyvalue key="TargetDBName" value="sandbox"/>
+        </parameters>
+    </job>
+    
+    <job name="dropTable UV" type="dropTable" command="vpa_archive_id_to_guid_UV" 
+         region="int" connectionType="teradata" onerror="Ignore">
+        <parameters>
+            <keyvalue key="TargetDBName" value="sandbox"/>
+        </parameters>
+    </job>
+    
+    <job name="dropTable ET" type="dropTable" command="vpa_archive_id_to_guid_ET" 
+         region="int" connectionType="teradata" onerror="Ignore">
+        <parameters>
+            <keyvalue key="TargetDBName" value="sandbox"/>
+        </parameters>
+    </job>
+
+    <job name="dropTable temp" type="dropTable" command="vpa_archive_id_to_guid" 
+         region="int" connectionType="teradata" onerror="Ignore">
+        <parameters>
+            <keyvalue key="TargetDBName" value="sandbox"/>
+        </parameters>
+    </job>
+
+    <job name="create mapping" type="executeSimpleQuery" command="create table sandbox.vpa_archive_id_to_guid(archive_cat_id varchar(8), taxonamy_cat_name varchar(128), taxonamy_guid varchar (64))" 
+                            region="int" connectionType="teradata">
+        <parameters>
+        </parameters>
+        <dependencies>
+            <dependent name='dropTable log'/>
+            <dependent name='dropTable UV'/>
+            <dependent name='dropTable ET'/>
+            <dependent name='dropTable temp'/>
+        </dependencies>
+    </job>
+    
+     <!--job name="twbrmcp" type="executeBash" command="twbrmcp @parameter_user" 
+                            region="int" onerror="Ignore">
+        <parameters>
+            <keyvalue key="user" value="vparonyan"/>
+        </parameters>
+    </job-->
+    
+    <job name="tdload" type="executeBash" 
+         command="tdload -h @parameter_tdwb -u vparonyan -p LetsDoTDWB12 
+                  -f csv/ArchiveCategoryIdToCustomerTaxonamyGUID.csv -d &#34;,&#34; 
+                  -t vpa_archive_id_to_guid --TargetWorkingDatabase sandbox" 
+         region="int">
+        <parameters>
+            <keyvalue key="tdwb" value="10.8.25.37"/>
+        </parameters>
+        <dependencies>
+            <!--dependent name='twbrmcp'/-->
+            <dependent name='create mapping'/>
+        </dependencies>
+    </job>
+
+    <job name="grant_select_on_table" type="executeSimpleQuery" command="grant_select_on_table" 
+                            region="int" connectionType="teradata">
+        <parameters>
+            <keyvalue key="dbname" value="sandbox"/>
+            <keyvalue key="tablename" value="vpa_archive_id_to_guid"/>
+        </parameters>
+        <dependencies>
+            <dependent name='tdload'/>
+        </dependencies>
+    </job>
+</Knowledge_base>

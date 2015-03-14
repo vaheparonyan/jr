@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Knowledge_base>
+
+    <job name="truncate teradata table" type="executeSimpleQuery" 
+            command="DELETE FROM sandbox.vahe_seo_url_metrics WHERE event_day_key = @parameter_dtkey"
+            region="na" connectionType="teradata">
+        <parameters>
+            <keyvalue key="dtkey" value="${datekey}"/>
+        </parameters>
+        <dependencies>
+        </dependencies> 
+    </job>
+    
+    <job name="load url metrics" type="executeSimpleQuery" 
+            command="seo_url_metrics_articles" 
+            region="na" connectionType="teradata">
+        <parameters>
+            <keyvalue key="dtkey" value="${datekey}"/>
+            <keyvalue key="date" value="${date}"/>
+        </parameters>
+        <dependencies>
+            <dependent name="truncate teradata table"/>
+        </dependencies> 
+    </job>
+    
+</Knowledge_base>

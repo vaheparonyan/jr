@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Knowledge_base>
+
+    <job name="get sitemaps data" type="getSiteMapUrls" 
+            command="internalFunction" region="na" connectionType="teradata" >
+        <parameters>
+            <keyvalue key="date" value="${datekey}"/>
+            <keyvalue key="outfile" value="/tmp/kb_sitemaps.tsv"/>
+        </parameters>
+    </job>
+    
+    <job name="dropTable log" type="dropTable" command="kb_sitemapurls_tmp_log" 
+         region="na" connectionType="teradata" onerror="Ignore">
+        <parameters>
+            <keyvalue key="TargetDBName" value="sandbox"/>
+        </parameters>
+    </job>
+    
+    <job name="dropTable UV" type="dropTable" command="kb_sitemapurls_tmp_UV" 
+         region="na" connectionType="teradata" onerror="Ignore">
+        <parameters>
+            <keyvalue key="TargetDBName" value="sandbox"/>
+        </parameters>
+    </job>
+    
+    <job name="dropTable ET" type="dropTable" command="kb_sitemapurls_tmp_ET" 
+         region="na" connectionType="teradata" onerror="Ignore">
+        <parameters>
+            <keyvalue key="TargetDBName" value="sandbox"/>
+        </parameters>
+    </job>
+
+    <job name="dropTable temp" type="dropTable" command="kb_sitemapurls_tmp" 
+         region="na" connectionType="teradata" onerror="Ignore">
+        <parameters>
+            <keyvalue key="TargetDBName" value="sandbox"/>
+        </parameters>
+    </job>
+
+    <job name="create tmp data table" type="executeBash"
+         command="tdsql -H @parameter_tdwc -u vparonyan -p LetsDoTDWC12 &#34;
+                    CREATE MULTISET TABLE sandbox.kb_sitemapurls_tmp ,NO FALLBACK ,
+                    NO BEFORE JOURNAL,
+                    NO AFTER JOURNAL,
+                    CHECKSUM = DEFAULT,
+                    DEFAULT MERGEBLOCKRATIO
+                    (
+                        datekey integer,
+                        url VARCHAR(1024) CHARACTER SET UNICODE NOT CASESPECIFIC,
+                        pagetype VARCHAR(32) CHARACTER SET UNICODE NOT CASESPECIFIC
+                    )
+                    PRIMARY INDEX ( datekey, url, pagetype )&#34;" 
+            region="na">
+        <parameters>
+            <keyvalue key="tdwc" value="tdwc"/>
+        </parameters>
+        <dependencies>
+            <dependent name='dropTable log'/>
+            <dependent name='dropTable UV'/>
+            <dependent name='dropTable ET'/>
+            <dependent name='dropTable temp'/>
+        </dependencies>
+    </job>
+    
+    <!--job name="twbrmcp" type="executeBash" command="twbrmcp @parameter_user" 
+                            region="na" onerror="Ignore">
+        <parameters>
+            <keyvalue key="user" value="vparonyan"/>
+        </parameters>
+    </job-->
+    
+    <job name="tdload" type="executeBash" 
+         command='tdload -h @parameter_tdwb -u vparonyan -p LetsDoTDWC12 
+                        -f /tmp/kb_sitemaps.tsv -d "|||" 
+                        -t kb_sitemapurls_tmp --TargetWorkingDatabase sandbox' 
+                            region="na">
+        <parameters>
+            <keyvalue key="tdwb" value="tdwc"/>
+        </parameters>
+        <dependencies>
+            <dependent name='get sitemaps data'/>
+            <dependent name='create tmp data table'/>
+        </dependencies>
+    </job>        
+    
+    <job name="remove dumped file" type="executeBash" 
+         command="sudo rm -rf /tmp/kb_sitemaps.tsv" 
+                            region="na">
+        <parameters>
+        </parameters>
+        <dependencies>
+            <dependent name='tdload'/>
+        </dependencies>
+    </job> 
+    
+    <job name="remove the current day data" type="executeSimpleQuery" 
+         command="delete from sandbox.kb_sitemapurls where datekey = @parameter_date" 
+         region="na" connectionType="teradata">
+        <parameters>
+            <keyvalue key="date" value="${datekey}"/>
+        </parameters>
+        <dependencies>
+            <dependent name='tdload'/>
+        </dependencies>
+    </job>
+        
+    <job name="copy from temp table" type="executeSimpleQuery" 
+         command="insert into sandbox.kb_sitemapurls
+                  select *
+                  from sandbox.kb_sitemapurls_tmp" 
+         region="na" connectionType="teradata">
+        <parameters>
+        </parameters>
+        <dependencies>
+            <dependent name='remove the current day data'/>
+        </dependencies>
+    </job>
+    
+    <job name="grant select data table" type="executeSimpleQuery" command="grant_select_on_table" 
+                            region="na" connectionType="teradata">
+        <parameters>
+            <keyvalue key="dbname" value="sandbox"/>
+            <keyvalue key="tablename" value="kb_sitemapurls"/>
+        </parameters>
+        <dependencies>
+            <dependent name='copy from temp table'/>
+        </dependencies>
+    </job>
+    
+</Knowledge_base>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<Knowledge_base>
+    <job name="preprocess: create views" type="executeSimpleQuery" command="deal_inventory_data" region="int" connectionType="teradata" >
+        <parameters>
+            <keyvalue key="country_code" value="UK"/>
+            <keyvalue key="start_dt" value="${date}"/>
+            <keyvalue key="end_dt" value="${date}"/>
+        </parameters>
+    </job>
+    
+    <job name="get deal inventory data header" type="executeBash"
+         command="tdsql -H 10.8.25.37 -u vparonyan -p LetsDoTDWB12 &#34;
+                    select  'taxonamy_guid',
+                            'taxonamy_category_name', 
+                            'total_count',
+                            'total_sold_deals',
+                            'total_bookings',
+                            'total_revenue'&#34; &#62; /tmp/deal_inventory_data.tsv" 
+            region="int">
+        <parameters>
+        </parameters>
+        <dependencies>
+            <dependent name="preprocess: create views"/>
+        </dependencies>
+    </job>
+    
+    <job name="get deal inventory data" type="executeBash"
+         command="tdsql -H 10.8.25.37 -u vparonyan -p LetsDoTDWB12 &#34;
+                        select distinct taxonamy_guid, 
+                            taxonamy_category_name, 
+                            sum(total_count), 
+                            sum(total_sold_deals), 
+                            sum(total_bookings) , 
+                            sum(total_revenue) 
+                        from sandbox.vpa_seo_deal_inventory_report 
+                        group by taxonamy_guid, taxonamy_category_name;&#34; &#62;&#62; /tmp/deal_inventory_data.tsv" 
+            region="int">
+        <parameters/>
+        <dependencies>
+            <dependent name="get deal inventory data header"/>
+        </dependencies>
+    </job>
+
+    <job name="D.Inv.D. - send report email" type="executeBash" 
+         command="echo &#34;GROUPON @parameter_country report for deal inventory for @parameter_start_dt to @parameter_end_dt&#34; &#124; mailx -a /tmp/deal_inventory_data.tsv -s 
+&#34;GROUPON @parameter_country report.&#34; vparonyan@groupon.com, adennehy@groupon.com" region="int" priority="1" >
+        <parameters>
+            <keyvalue key="country" value="UK"/>
+            <keyvalue key="start_dt" value="${date}"/>
+            <keyvalue key="end_dt" value="${date}"/>
+        </parameters>
+        <dependencies>
+            <dependent name='get deal inventory data'/>
+        </dependencies>
+    </job>
+</Knowledge_base>

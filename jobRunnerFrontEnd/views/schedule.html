@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <link rel="stylesheet" href="./thirdParty/jquery/smoothness/jquery-ui.css">
+    <link charset="utf-8" title="no title" media="screen" type="text/css" href="css/show_event.css" rel="stylesheet">
+
+    <script src="./thirdParty/jquery/jquery-1.10.2.js"></script>
+    <script src="./thirdParty/jquery/jquery-ui.js"></script>
+    <link rel='stylesheet' href='./thirdParty/fullcalendar-2.1.1/fullcalendar.css' />
+    <script src='./thirdParty/fullcalendar-2.1.1/lib/moment.min.js'></script>
+    <script src='./thirdParty/fullcalendar-2.1.1/fullcalendar.js'></script>
+
+
+    <script>
+
+        function createNewEvent() {
+            var newEvent = {};
+
+            var h = parseInt($('#start_date_time_time').val() / 60);
+            var hour = h < 10 ? h == 0 ? '00' : '0' + h.toString() : h.toString();
+
+            var m = parseInt($('#start_date_time_time').val() % 60);
+            var min = m < 10 ? m == 0 ? '00' : '0' + m.toString() : m.toString();
+
+            newEvent.title = $('#job_xml').val();
+            newEvent.allDay = false;
+            newEvent.start = $('#start_date_time_date').val() + "T" + hour + ":" + min;
+            newEvent.job_flow = $('#job_xml').val();
+            newEvent.range = $('#range').val();
+            newEvent.env = $('#env').val();
+            newEvent.region = $('#region').val();
+            newEvent.start_day = $('#start_day').val();
+            newEvent.end_day = $('#end_day').val();
+
+            if (document.getElementById('recurring_event_enable_disable').innerHTML == 'Enabled') {
+                newEvent.repeat = {};
+
+                newEvent.repeat.main = '1';
+                //event.repeat.id = g_next_repeat_id;
+
+                newEvent.repeat.frequency = document.querySelector('input[name="repeat"]:checked').value;
+
+                newEvent.repeat.occurance = {};
+                if (newEvent.repeat.frequency == 'day') {
+                    newEvent.repeat.occurance.day = document.getElementById('day_count').value;
+                } else if (newEvent.repeat.frequency == 'week') {
+                    newEvent.repeat.occurance.week = document.getElementById('week_count').value;
+                    newEvent.repeat.occurance.days = [];
+
+                    $('.dhx_repeat_checkbox').each(function (i, obj) {
+                        if (obj.checked) {
+                            newEvent.repeat.occurance.days.push(obj.value);
+                        }
+                    });
+
+                } else if (newEvent.repeat.frequency == 'month') {
+                    newEvent.repeat.occurance.type = document.querySelector('input[name="month_type"]:checked').value;
+                    if (newEvent.repeat.occurance.type === "day") {
+                        newEvent.repeat.occurance.day = document.getElementById('month_day').value;
+                        newEvent.repeat.occurance.month = document.getElementById('month_count').value;
+                    } else if (newEvent.repeat.occurance.type === "week") {
+                        newEvent.repeat.occurance.day = document.getElementById('month_day2').value;
+                        newEvent.repeat.occurance.week = document.getElementById('month_week2').value;
+                        newEvent.repeat.occurance.month = document.getElementById('month_count2').value;
+
+                    }
+                }
+                newEvent.repeat.end = {};
+                newEvent.repeat.end.type = document.querySelector('input[name="end"]:checked').value;
+
+                if (newEvent.repeat.end.type === "no_end_date") {
+                } else if (newEvent.repeat.end.type === "after") {
+                    newEvent.repeat.end.no_end_date = document.getElementById('occurences_count').value;
+                } else if (newEvent.repeat.end.type === "end_by") {
+                    newEvent.repeat.end.no_end_date = document.getElementById('date_of_end').value;
+                }
+            }
+
+            return newEvent;
+        }
+
+        function update(action) {
+            var events = $('#calendar').fullCalendar('clientEvents');
+
+            var newEvent = createNewEvent();
+
+            var uid = $('#uid').val();
+
+            for (var i = 0; uid && i < events.length; i++) {
+                if (events[i]._id === uid) {
+                    newEvent.index = events[i].index;
+                    newEvent.parent = events[i].parent;
+                    break;
+                }
+            }
+
+            $.post(action, newEvent, function () {
+                $('#calendar').fullCalendar( 'removeEvents' );
+                $('#calendar').fullCalendar( 'refetchEvents' );
+            });
+
+            $('#jobObjectDialog').dialog('close');
+        }
+
+        $(document).ready(function() {
+
+            $.ajax({
+                url: "scheduled_data",
+                type: "GET",
+                contentType: "application/json",
+                dataType: "json",
+                success: function(data) {
+                    $.get(
+                    "/scheduled_job_flow_files",
+                    function(jobFlowFiles, status){
+                        if (status !== "success") {
+                            alert("The execute operation failed on server.");
+                        } else {
+                            renderCalendar(data, jobFlowFiles);
+                        }
+                    });
+                },
+                error: function(jqXHR, textStatus, errorThrown) { alert(errorThrown); },
+                complete: function (data, textStatus, jqXHR) {
+
+                }
+            });
+
+            $('#saveBtn').click(function() {
+                update("save_scheduled_data");
+            });
+            $('#cancelBtn').click(function() {
+                $('#jobObjectDialog').dialog('close');
+            });
+            $('#deleteBtn').click(function() {
+                update( "/" + "delete_scheduled_data");
+            });
+        });
+
+        var renderCalendar = function(data, jobFlowFiles) {
+            for (var j in jobFlowFiles) {
+                var opt = document.createElement('option');
+                opt.value = j;
+                opt.innerHTML = j;
+                document.getElementById('job_xml').appendChild(opt);
+            };
+
+            $('#calendar').fullCalendar({
+                header: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'month,agendaWeek,agendaDay'
+                },
+                editable: true,
+                eventStartEditable: true,
+                eventDurationEditable: false,
+                droppable: false,
+                allDaySlot: false,
+                eventLimit: true, // allow "more" link when too many events
+                eventSources: [ 'scheduled_data' ],
+                dayClick: function(date, jsEvent, view) {
+
+                    var $dialog = $('#jobObjectDialog')
+                    .dialog({
+                        autoOpen: false,
+                        modal: true,
+                        draggable: true,
+                        width:'750px'});
+
+                    $('#uid').val('');
+                    $('#job_xml').val('');
+                    $('#env').val('production');
+                    $('#range').val('true');
+                    $('#region').val('na');
+
+                    $('#start_day').val('');
+                    $('#end_day').val('');
+
+                    var monthkey = date.month() + 1;
+                    var month = monthkey < 10 ? "0" + monthkey : monthkey;
+                    var day = date.date() < 10 ? "0" + date.date()  : date.date();
+                    $('#start_date_time_date').val(date.year() + "-" + month + "-" + day);
+
+                    $('#start_date_time_time').val(0);
+
+                    $dialog.dialog('open');
+
+                },
+                eventClick: function(calEvent, jsEvent, view) {
+
+                    var $dialog = $('#jobObjectDialog')
+                            .dialog({
+                                autoOpen: false,
+                                modal: true,
+                                draggable: true,
+                                width:'750px'});
+
+                    $('#uid').val(calEvent._id);
+                    $('#job_xml').val(calEvent.job_flow);
+                    $('#env').val(calEvent.env);
+                    $('#range').val(calEvent.range);
+                    $('#region').val(calEvent.region);
+
+                    $('#start_day').val(calEvent.start_day);
+                    $('#end_day').val(calEvent.end_day);
+
+                    var monthkey = calEvent.start.month() + 1;
+                    var month = monthkey < 10 ? "0" + monthkey : monthkey;
+                    var day = calEvent.start.date() < 10 ? "0" + calEvent.start.date()  : calEvent.start.date();
+                    $('#start_date_time_date').val(calEvent.start.year() + "-" + month + "-" + day);
+
+                    $('#start_date_time_time').val( calEvent.start.hours() * 60 + calEvent.start.minutes());
+
+                    if (calEvent.repeat) {
+                        document.getElementById('recurring_event_enable_disable').innerHTML = 'Disabled';
+
+                        repeatEvent();
+
+                        if (calEvent.repeat.frequency == 'day') {
+                            document.getElementById('dhx_repeat_radio_day').checked = true;
+                            repeat_radio_day();
+
+                            document.getElementById('day_count').value = calEvent.repeat.occurance.day;
+
+
+                            var sel = 'input[value="' + calEvent.repeat.end.type + '"][name="end"]';
+                            document.querySelector(sel).checked = true;
+
+                        } else  if (calEvent.repeat.frequency == 'week') {
+                            document.getElementById('dhx_repeat_radio_week').checked = true;
+                            repeat_radio_week();
+                        } else  if (calEvent.repeat.frequency == 'month') {
+                            document.getElementById('dhx_repeat_radio_month').checked = true;
+                            repeat_radio_month();
+                        }
+                    }
+
+                    $dialog.dialog('open');
+
+                },
+                eventRender: function(event, element, view) {
+                    element.find(".fc-content")
+                            .append("<br><span style=\"font-family: Tahoma;font-size: 6pt;\" class=\"fc-title\">" + event.start_day + "</span>")
+                            .append("<span style=\"font-family: Tahoma;font-size: 6pt;\" class=\"fc-title\"> - </span>")
+                            .append("<span style=\"font-family: Tahoma;font-size: 6pt;\" class=\"fc-title\">" + event.end_day + "</span>");
+                },
+                eventAfterAllRender: function( view ) {
+                    var events = $('#calendar').fullCalendar('clientEvents');
+                    var parentToID = {};
+
+                    for (var i = 0; i < events.length; i++) {
+                        if (events[i].index === events[i].parent) {
+                            parentToID[events[i].index] = events[i]._id;
+                        }
+                    }
+                    for (var i = 0; i < events.length; i++) {
+                        if (events[i].parent in parentToID) {
+                            events[i]._id = parentToID[events[i].parent];
+                        }
+                    }
+                },
+                eventDrop: function(event, delta, revertFunc) {
+                    var obj = {};
+                    obj.parent = event.parent;
+                    obj.days = delta._data.days;
+                    obj.hours = delta._data.hours;
+                    obj.min = delta._data.minutes;
+                    obj.months = delta._data.months;
+                    obj.years = delta._data.years;
+
+                    var posting = $.post('/drop_scheduled_data', obj, function (data) {
+                    });
+                    posting.fail(function( ) {
+                        revertFunc();
+                    });
+                },
+                timeFormat: 'H(:mm)'
+            });
+        };
+    </script>
+
+    <script>
+        var repeatEvent = function() {
+            if (document.getElementById('recurring_event_enable_disable').innerHTML == 'Disabled') {
+                document.getElementById('recurring_event_enable_disable').innerHTML = 'Enabled';
+                document.getElementById('recurring_events_enebled').style.height = '100px';
+            } else {
+                document.getElementById('recurring_event_enable_disable').innerHTML = 'Disabled';
+                document.getElementById('recurring_events_enebled').style.height = '0px';
+            }
+        };
+
+        var repeat_radio_day = function() {
+            document.getElementById('dhx_repeat_day').style.display = 'block';
+            document.getElementById('dhx_repeat_week').style.display = 'none';
+            document.getElementById('dhx_repeat_month').style.display = 'none';
+        };
+        var repeat_radio_week = function() {
+            document.getElementById('dhx_repeat_day').style.display = 'none';
+            document.getElementById('dhx_repeat_week').style.display = 'block';
+            document.getElementById('dhx_repeat_month').style.display = 'none';
+
+        };
+        var repeat_radio_month = function() {
+            document.getElementById('dhx_repeat_day').style.display = 'none';
+            document.getElementById('dhx_repeat_week').style.display = 'none';
+            document.getElementById('dhx_repeat_month').style.display = 'block';
+        };
+    </script>
+    <style>
+
+        body {
+            margin: 40px 10px;
+            padding: 0;
+            font-family: "Lucida Grande",Helvetica,Arial,Verdana,sans-serif;
+            font-size: 14px;
+        }
+
+        #calendar {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+    </style>
+</head>
+<body>
+
+<div id='calendar'></div>
+
+
+    <div id="jobObjectDialog" class="dhx_cal_light_wide" style="visibility: visible; display: none">
+    <!--div id="jobObjectDialog" class="dhx_cal_light_wide" style="visibility: visible;"-->
+
+        <div id="uid" style="display: none;"></div>
+
+        <div class="dhx_cal_ltitle" style="cursor: pointer;">
+            <span class="dhx_mark"> </span>
+        </div>
+
+        <div class="dhx_cal_larea" style="height: auto;">
+
+            <div class="dhx_wrap_section">
+                <div class="dhx_cal_lsection">Job flow</div>
+                <div class="dhx_cal_ltext" style="height:21px;font-family: Tahoma;font-size: 8pt;">
+                    <select id="job_xml" style="width:100%;">
+                    </select>
+                </div>
+            </div>
+
+            <div class="dhx_wrap_section">
+                <div class="dhx_cal_lsection">Env</div>
+                <div class="dhx_cal_ltext" style="height:21px;">
+                    <select id="env" style="width:100%;font-family: Tahoma;font-size: 8pt;">
+                        <option id="env_production" value="production">Production</option>
+                        <option id="env_staging" value="staging">Staging</option>
+                        <option id="env_development" value="development">Development</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="dhx_wrap_section">
+                <div class="dhx_cal_lsection">Range</div>
+                <div class="dhx_cal_ltext" style="height:21px;">
+                    <select id="range" style="width:100%; font-family: Tahoma;font-size: 8pt;">
+                        <option id="range_true" value="true">True</option>
+                        <option id="range_false" value="false">False</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="dhx_wrap_section">
+                <div class="dhx_cal_lsection">Region</div>
+                <div class="dhx_cal_ltext" style="height:21px;">
+                    <select id="region" style="width:100%;font-family: Tahoma;font-size: 8pt;">
+                        <option id="region_na" value="na">NA</option>
+                        <option id="region_int" value="int">Intl</option>
+                        <option id="region_needish" value="needish">Needish</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="dhx_wrap_section">
+                <div class="dhx_cal_lsection">Start Day</div>
+                <div class="dhx_cal_ltext" style="height:21px;">
+                    <textarea id="start_day" style="font-family: Tahoma;font-size: 8pt;"></textarea>
+                </div>
+            </div>
+
+            <div class="dhx_wrap_section">
+                <div id="end_date" class="dhx_cal_lsection">End Day</div>
+                <div class="dhx_cal_ltext" style="height:21px;">
+                    <textarea id="end_day" style="font-family: Tahoma;font-size: 8pt;"></textarea>
+                </div>
+            </div>
+
+
+
+
+
+
+
+
+
+
+        <div class="dhx_wrap_section">
+            <div id="recurring_events" class="dhx_cal_lsection">
+                <div class="dhx_custom_button" onclick="repeatEvent()">
+                    <div class="dhx_custom_button_recurring"style="background-position: -5px 0px;"></div>
+                    <div id='recurring_event_enable_disable'>Disabled</div>
+                </div>
+                Repeat event
+            </div>
+            <div id="recurring_events_enebled" class="dhx_form_repeat" style="height: 0px;">
+                <form>
+                    <div class="dhx_repeat_left">
+                        <label>
+                            <input class="dhx_repeat_radio" id='dhx_repeat_radio_day' onclick="repeat_radio_day()" type="radio" checked="" value="day" name="repeat">
+                            Daily
+                        </label>
+                        <br>
+                        <label>
+                            <input class="dhx_repeat_radio" id='dhx_repeat_radio_week' onclick="repeat_radio_week()" type="radio" value="week" name="repeat">
+                            Weekly
+                        </label>
+                        <br>
+                        <label>
+                            <input class="dhx_repeat_radio" id='dhx_repeat_radio_month' onclick="repeat_radio_month()" type="radio" value="month" name="repeat">
+                            Monthly
+                        </label>
+                    </div>
+                    <div class="dhx_repeat_divider"></div>
+                    <div class="dhx_repeat_center">
+                        <div id="dhx_repeat_day" style="display: block;">
+                            <label>
+                                Every
+                            </label>
+                            <input class="dhx_repeat_text" id="day_count" type="text" value="1" checked="" name="day_count">
+                            day
+                            <br>
+
+                        </div>
+                        <div id="dhx_repeat_week" style="display: none;">
+                            Repeat every
+                            <input class="dhx_repeat_text" id="week_count" type="text" value="1" name="week_count">
+                            week next days:
+                            <br>
+                            <table class="dhx_repeat_days">
+                                <tbody>
+                                <tr>
+                                    <td>
+                                        <label>
+                                            <input class="dhx_repeat_checkbox" type="checkbox" value="1" name="week_day">
+                                            Monday
+                                        </label>
+                                        <br>
+                                        <label>
+                                            <input class="dhx_repeat_checkbox" type="checkbox" value="4" name="week_day">
+                                            Thursday
+                                        </label>
+                                    </td>
+                                    <td>
+                                        <label>
+                                            <input class="dhx_repeat_checkbox" type="checkbox" value="2" name="week_day">
+                                            Tuesday
+                                        </label>
+                                        <br>
+                                        <label>
+                                            <input class="dhx_repeat_checkbox" type="checkbox" value="5" name="week_day">
+                                            Friday
+                                        </label>
+                                    </td>
+                                    <td>
+                                        <label>
+                                            <input class="dhx_repeat_checkbox" type="checkbox" value="3" name="week_day">
+                                            Wednesday
+                                        </label>
+                                        <br>
+                                        <label>
+                                            <input class="dhx_repeat_checkbox" type="checkbox" value="6" name="week_day">
+                                            Saturday
+                                        </label>
+                                    </td>
+                                    <td>
+                                        <label>
+                                            <input class="dhx_repeat_checkbox" type="checkbox" value="0" name="week_day">
+                                            Sunday
+                                        </label>
+                                        <br>
+                                        <br>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="dhx_repeat_month" style="display: none;">
+                            <label>
+                                <input class="dhx_repeat_radio" type="radio" value="day" name="month_type">
+                                Repeat
+                            </label>
+                            <input class="dhx_repeat_text" type="text" value="1" id="month_day" name="month_day">
+                            day every
+                            <input class="dhx_repeat_text" id="month_count" type="text" value="1" name="month_count">
+                            month
+                            <br>
+                            <label>
+                                <input class="dhx_repeat_radio" type="radio" value="week" checked="" name="month_type">
+                                On
+                            </label>
+                            <input class="dhx_repeat_text" type="text" value="1" id="month_week2" name="month_week2">
+                            <select name="month_day2" id="month_day2">
+                                <option selected="" value="1">Monday</option>
+                                <option value="2">Tuesday</option>
+                                <option value="3">Wednesday</option>
+                                <option value="4">Thursday</option>
+                                <option value="5">Friday</option>
+                                <option value="6">Saturday</option>
+                                <option value="0">Sunday</option>
+                            </select>
+                            every
+                            <input class="dhx_repeat_text" type="text" value="1" name="month_count2" id="month_count2">
+                            month
+                            <br>
+                        </div>
+                    </div>
+
+                    <div class="dhx_repeat_divider"></div>
+                    <div class="dhx_repeat_right">
+                        <label>
+                            <input class="dhx_repeat_radio" type="radio" checked="" name="end" value="no_end_date">
+                            No end date
+                        </label>
+                        <br>
+                        <label>
+                            <input class="dhx_repeat_radio" type="radio" name="end" value="after">
+                            After
+                        </label>
+                        <input class="dhx_repeat_text" type="text" value="1" id="occurences_count" name="occurences_count">
+                        occurrences
+                        <br>
+                        <label>
+                            <input class="dhx_repeat_radio" type="radio" name="end" value="end_by">
+                            End by
+                        </label>
+                        <input class="dhx_repeat_date" type="text" value="" id="date_of_end" name="date_of_end">
+                        <br>
+                    </div>
+                </form>
+            </div>
+            <div style="clear:both"> </div>
+        </div>
+
+
+
+
+
+
+
+
+
+    <div class="dhx_wrap_section">
+        <div id="start_time" class="dhx_cal_lsection">Start Date/Time</div>
+
+
+        <div class="dhx_cal_ltext" style="font-family: Tahoma;font-size: 8pt;">
+            <input id="start_date_time_date" class="dhx_repeat_text" type="text" readonly="true" style="width:10%;min-width: 70px;max-width: 70px;"/>
+
+            <select id="start_date_time_time">
+                <option value="0">00:00</option>
+                <option value="5">00:05</option>
+                <option value="10">00:10</option>
+                <option value="15">00:15</option>
+                <option value="20">00:20</option>
+                <option value="25">00:25</option>
+                <option value="30">00:30</option>
+                <option value="35">00:35</option>
+                <option value="40">00:40</option>
+                <option value="45">00:45</option>
+                <option value="50">00:50</option>
+                <option value="55">00:55</option>
+                <option value="60">01:00</option>
+                <option value="65">01:05</option>
+                <option value="70">01:10</option>
+                <option value="75">01:15</option>
+                <option value="80">01:20</option>
+                <option value="85">01:25</option>
+                <option value="90">01:30</option>
+                <option value="95">01:35</option>
+                <option value="100">01:40</option>
+                <option value="105">01:45</option>
+                <option value="110">01:50</option>
+                <option value="115">01:55</option>
+                <option value="120">02:00</option>
+                <option value="125">02:05</option>
+                <option value="130">02:10</option>
+                <option value="135">02:15</option>
+                <option value="140">02:20</option>
+                <option value="145">02:25</option>
+                <option value="150">02:30</option>
+                <option value="155">02:35</option>
+                <option value="160">02:40</option>
+                <option value="165">02:45</option>
+                <option value="170">02:50</option>
+                <option value="175">02:55</option>
+                <option value="180">03:00</option>
+                <option value="185">03:05</option>
+                <option value="190">03:10</option>
+                <option value="195">03:15</option>
+                <option value="200">03:20</option>
+                <option value="205">03:25</option>
+                <option value="210">03:30</option>
+                <option value="215">03:35</option>
+                <option value="220">03:40</option>
+                <option value="225">03:45</option>
+                <option value="230">03:50</option>
+                <option value="235">03:55</option>
+                <option value="240">04:00</option>
+                <option value="245">04:05</option>
+                <option value="250">04:10</option>
+                <option value="255">04:15</option>
+                <option value="260">04:20</option>
+                <option value="265">04:25</option>
+                <option value="270">04:30</option>
+                <option value="275">04:35</option>
+                <option value="280">04:40</option>
+                <option value="285">04:45</option>
+                <option value="290">04:50</option>
+                <option value="295">04:55</option>
+                <option value="300">05:00</option>
+                <option value="305">05:05</option>
+                <option value="310">05:10</option>
+                <option value="315">05:15</option>
+                <option value="320">05:20</option>
+                <option value="325">05:25</option>
+                <option value="330">05:30</option>
+                <option value="335">05:35</option>
+                <option value="340">05:40</option>
+                <option value="345">05:45</option>
+                <option value="350">05:50</option>
+                <option value="355">05:55</option>
+                <option value="360">06:00</option>
+                <option value="365">06:05</option>
+                <option value="370">06:10</option>
+                <option value="375">06:15</option>
+                <option value="380">06:20</option>
+                <option value="385">06:25</option>
+                <option value="390">06:30</option>
+                <option value="395">06:35</option>
+                <option value="400">06:40</option>
+                <option value="405">06:45</option>
+                <option value="410">06:50</option>
+                <option value="415">06:55</option>
+                <option value="420">07:00</option>
+                <option value="425">07:05</option>
+                <option value="430">07:10</option>
+                <option value="435">07:15</option>
+                <option value="440">07:20</option>
+                <option value="445">07:25</option>
+                <option value="450">07:30</option>
+                <option value="455">07:35</option>
+                <option value="460">07:40</option>
+                <option value="465">07:45</option>
+                <option value="470">07:50</option>
+                <option value="475">07:55</option>
+                <option value="480">08:00</option>
+                <option value="485">08:05</option>
+                <option value="490">08:10</option>
+                <option value="495">08:15</option>
+                <option value="500">08:20</option>
+                <option value="505">08:25</option>
+                <option value="510">08:30</option>
+                <option value="515">08:35</option>
+                <option value="520">08:40</option>
+                <option value="525">08:45</option>
+                <option value="530">08:50</option>
+                <option value="535">08:55</option>
+                <option value="540">09:00</option>
+                <option value="545">09:05</option>
+                <option value="550">09:10</option>
+                <option value="555">09:15</option>
+                <option value="560">09:20</option>
+                <option value="565">09:25</option>
+                <option value="570">09:30</option>
+                <option value="575">09:35</option>
+                <option value="580">09:40</option>
+                <option value="585">09:45</option>
+                <option value="590">09:50</option>
+                <option value="595">09:55</option>
+                <option value="600">10:00</option>
+                <option value="605">10:05</option>
+                <option value="610">10:10</option>
+                <option value="615">10:15</option>
+                <option value="620">10:20</option>
+                <option value="625">10:25</option>
+                <option value="630">10:30</option>
+                <option value="635">10:35</option>
+                <option value="640">10:40</option>
+                <option value="645">10:45</option>
+                <option value="650">10:50</option>
+                <option value="655">10:55</option>
+                <option value="660">11:00</option>
+                <option value="665">11:05</option>
+                <option value="670">11:10</option>
+                <option value="675">11:15</option>
+                <option value="680">11:20</option>
+                <option value="685">11:25</option>
+                <option value="690">11:30</option>
+                <option value="695">11:35</option>
+                <option value="700">11:40</option>
+                <option value="705">11:45</option>
+                <option value="710">11:50</option>
+                <option value="715">11:55</option>
+                <option value="720">12:00</option>
+                <option value="725">12:05</option>
+                <option value="730">12:10</option>
+                <option value="735">12:15</option>
+                <option value="740">12:20</option>
+                <option value="745">12:25</option>
+                <option value="750">12:30</option>
+                <option value="755">12:35</option>
+                <option value="760">12:40</option>
+                <option value="765">12:45</option>
+                <option value="770">12:50</option>
+                <option value="775">12:55</option>
+                <option value="780">13:00</option>
+                <option value="785">13:05</option>
+                <option value="790">13:10</option>
+                <option value="795">13:15</option>
+                <option value="800">13:20</option>
+                <option value="805">13:25</option>
+                <option value="810">13:30</option>
+                <option value="815">13:35</option>
+                <option value="820">13:40</option>
+                <option value="825">13:45</option>
+                <option value="830">13:50</option>
+                <option value="835">13:55</option>
+                <option value="840">14:00</option>
+                <option value="845">14:05</option>
+                <option value="850">14:10</option>
+                <option value="855">14:15</option>
+                <option value="860">14:20</option>
+                <option value="865">14:25</option>
+                <option value="870">14:30</option>
+                <option value="875">14:35</option>
+                <option value="880">14:40</option>
+                <option value="885">14:45</option>
+                <option value="890">14:50</option>
+                <option value="895">14:55</option>
+                <option value="900">15:00</option>
+                <option value="905">15:05</option>
+                <option value="910">15:10</option>
+                <option value="915">15:15</option>
+                <option value="920">15:20</option>
+                <option value="925">15:25</option>
+                <option value="930">15:30</option>
+                <option value="935">15:35</option>
+                <option value="940">15:40</option>
+                <option value="945">15:45</option>
+                <option value="950">15:50</option>
+                <option value="955">15:55</option>
+                <option value="960">16:00</option>
+                <option value="965">16:05</option>
+                <option value="970">16:10</option>
+                <option value="975">16:15</option>
+                <option value="980">16:20</option>
+                <option value="985">16:25</option>
+                <option value="990">16:30</option>
+                <option value="995">16:35</option>
+                <option value="1000">16:40</option>
+                <option value="1005">16:45</option>
+                <option value="1010">16:50</option>
+                <option value="1015">16:55</option>
+                <option value="1020">17:00</option>
+                <option value="1025">17:05</option>
+                <option value="1030">17:10</option>
+                <option value="1035">17:15</option>
+                <option value="1040">17:20</option>
+                <option value="1045">17:25</option>
+                <option value="1050">17:30</option>
+                <option value="1055">17:35</option>
+                <option value="1060">17:40</option>
+                <option value="1065">17:45</option>
+                <option value="1070">17:50</option>
+                <option value="1075">17:55</option>
+                <option value="1080">18:00</option>
+                <option value="1085">18:05</option>
+                <option value="1090">18:10</option>
+                <option value="1095">18:15</option>
+                <option value="1100">18:20</option>
+                <option value="1105">18:25</option>
+                <option value="1110">18:30</option>
+                <option value="1115">18:35</option>
+                <option value="1120">18:40</option>
+                <option value="1125">18:45</option>
+                <option value="1130">18:50</option>
+                <option value="1135">18:55</option>
+                <option value="1140">19:00</option>
+                <option value="1145">19:05</option>
+                <option value="1150">19:10</option>
+                <option value="1155">19:15</option>
+                <option value="1160">19:20</option>
+                <option value="1165">19:25</option>
+                <option value="1170">19:30</option>
+                <option value="1175">19:35</option>
+                <option value="1180">19:40</option>
+                <option value="1185">19:45</option>
+                <option value="1190">19:50</option>
+                <option value="1195">19:55</option>
+                <option value="1200">20:00</option>
+                <option value="1205">20:05</option>
+                <option value="1210">20:10</option>
+                <option value="1215">20:15</option>
+                <option value="1220">20:20</option>
+                <option value="1225">20:25</option>
+                <option value="1230">20:30</option>
+                <option value="1235">20:35</option>
+                <option value="1240">20:40</option>
+                <option value="1245">20:45</option>
+                <option value="1250">20:50</option>
+                <option value="1255">20:55</option>
+                <option value="1260">21:00</option>
+                <option value="1265">21:05</option>
+                <option value="1270">21:10</option>
+                <option value="1275">21:15</option>
+                <option value="1280">21:20</option>
+                <option value="1285">21:25</option>
+                <option value="1290">21:30</option>
+                <option value="1295">21:35</option>
+                <option value="1300">21:40</option>
+                <option value="1305">21:45</option>
+                <option value="1310">21:50</option>
+                <option value="1315">21:55</option>
+                <option value="1320">22:00</option>
+                <option value="1325">22:05</option>
+                <option value="1330">22:10</option>
+                <option value="1335">22:15</option>
+                <option value="1340">22:20</option>
+                <option value="1345">22:25</option>
+                <option value="1350">22:30</option>
+                <option value="1355">22:35</option>
+                <option value="1360">22:40</option>
+                <option value="1365">22:45</option>
+                <option value="1370">22:50</option>
+                <option value="1375">22:55</option>
+                <option value="1380">23:00</option>
+                <option value="1385">23:05</option>
+                <option value="1390">23:10</option>
+                <option value="1395">23:15</option>
+                <option value="1400">23:20</option>
+                <option value="1405">23:25</option>
+                <option value="1410">23:30</option>
+                <option value="1415">23:35</option>
+                <option value="1420">23:40</option>
+                <option value="1425">23:45</option>
+                <option value="1430">23:50</option>
+                <option value="1435">23:55</option>
+            </select>
+        </div>
+    </div>
+
+
+    </div>
+
+        <div id="saveBtnDiv" class="dhx_btn_set dhx_left_btn_set dhx_save_btn_set">
+        <div class="dhx_save_btn" dhx_button="1"></div>
+        <div id="saveBtn">Save</div>
+    </div>
+
+        <div class="dhx_btn_set dhx_left_btn_set dhx_cancel_btn_set">
+        <div class="dhx_cancel_btn" dhx_button="1"></div>
+        <div id="cancelBtn">Cancel</div>
+    </div>
+        <div class="dhx_btn_set dhx_right_btn_set dhx_delete_btn_set" style="float:right;">
+    <div class="dhx_delete_btn" dhx_button="1"></div>
+    <div id="deleteBtn">Delete</div>
+</div>
+    </div>
+
+
+</body>
+</html>

@@ -1,0 +1,19 @@
+*.class
+*.log
+.DS_Store
+build/
+dist/
+log/
+log4j/
+.idea
+node_modules
+WBR-cubes-sql.iml
+.capistrano
+
+# Package Files #
+/*.jar
+*.war
+*.ear
+*.mf
+nbbuild.xml
+nbproject/

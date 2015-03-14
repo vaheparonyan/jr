@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Knowledge_base>
+    
+    <job name="seo deal inv. weekly results" type="executeBash"
+         command="tdsql -H 10.20.88.35 -u vparonyan -p LetsDoTDWC12 &#34;
+                    insert into sandbox.kb_seo_deal_inventory_weekly(datekey, url, deal_count, merchant_count, merchant_with_desc)  
+                    select datekey, 
+                           url, 
+                           cast(sum(deal_count) as decimal(10,2))/7 as deal_count, 
+                           cast(sum(merchant_count) as decimal(10,2))/7 as merchant_count, 
+                           cast(sum(merchant_with_desc) as decimal(10,2))/7 as merchant_with_desc 
+                    from sandbox.kb_seo_deal_inventory 
+                    where cast('@parameter_date' as Date)-7 &#60; cast(datekey - 19000000 as Date format 'yyyy-mm-dd') and
+                          cast('@parameter_date' as Date)+1 &#62; cast(datekey - 19000000 as Date format 'yyyy-mm-dd')
+                    group by url, datekey; &#34;"
+            region="na">
+        <parameters>
+            <keyvalue key="date" value="${date}"/>
+        </parameters>
+    </job>
+
+</Knowledge_base>

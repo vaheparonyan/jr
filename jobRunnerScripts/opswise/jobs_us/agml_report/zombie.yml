@@ -1,0 +1,115 @@
+prepare_seo_deal_inventory:
+  class: ScriptTask
+  configuration:
+    script: ${base_dir}/shell/agml_report.sh
+
+drop_table_temp:
+  class: SQLExecute
+  settings:
+    try: 1
+  configuration:
+    db:
+      adapter: Teradata
+      dsn: tdwc_dsn
+    sql:
+     - DROP TABLE sandbox.agml_merchants_report_tmp;
+
+drop_table_log:
+  class: SQLExecute
+  settings:
+    try: 1
+  configuration:
+    db:
+      adapter: Teradata
+      dsn: tdwc_dsn
+    sql:
+     - DROP TABLE sandbox.agml_merchants_report_tmp_log;
+     - DROP TABLE sandbox.agml_merchants_report_tmp_UV;
+     - DROP TABLE sandbox.agml_merchants_report_tmp_ET;
+
+create_temp_table_temp:
+  class: SQLExecute
+  dependencies:
+    - drop_table_temp
+    - prepare_seo_deal_inventory
+  configuration:
+    db:
+      adapter: Teradata
+      dsn: tdwc_dsn
+    sql: |
+      CREATE MULTISET TABLE sandbox.agml_merchants_report_tmp ,NO FALLBACK ,
+          NO BEFORE JOURNAL,
+          NO AFTER JOURNAL,
+          CHECKSUM = DEFAULT,
+          DEFAULT MERGEBLOCKRATIO
+          (
+           url VARCHAR(256) CHARACTER SET UNICODE CASESPECIFIC,
+           name VARCHAR(256) CHARACTER SET UNICODE CASESPECIFIC,
+           address VARCHAR(256) CHARACTER SET UNICODE CASESPECIFIC,
+           city VARCHAR(128) CHARACTER SET UNICODE CASESPECIFIC,
+           category VARCHAR(256) CHARACTER SET UNICODE CASESPECIFIC,
+           category_guid VARCHAR(64) CHARACTER SET UNICODE CASESPECIFIC,
+           description_length INTEGER,
+           tips INTEGER,
+           yelp_reviews INTEGER,
+           yelp_rating INTEGER,
+           ta_reviews INTEGER,
+           ta_rating INTEGER,
+           yahoo_reviews INTEGER,
+           yahoo_rating INTEGER,
+           google_reviews INTEGER,
+           google_rating INTEGER,
+           ranking INTEGER,
+           score DECIMAL(10,5),
+           source_url VARCHAR(512) CHARACTER SET UNICODE CASESPECIFIC,
+           location_guid VARCHAR(64) CHARACTER SET UNICODE CASESPECIFIC
+          );
+
+twbrmcp:
+  class: ScriptTask
+  settings:
+    try: 1
+  configuration:
+    script: twbrmcp ${tdload_user}
+
+load_data_to_tmp_table:
+  class: ScriptTask
+  dependencies:
+    - twbrmcp
+    - drop_table_log
+    - create_temp_table_temp
+  configuration:
+    script: tdload -f /tmp/agml_report_out.txt -d TAB -t agml_merchants_report_tmp --TargetWorkingDatabase sandbox -h ${tdload_host} -u ${tdload_user} -p ${tdload_pass}
+
+truncate_main_table:
+  class: SQLExecute
+  dependencies:
+    - load_data_to_tmp_table
+  configuration:
+    db:
+      adapter: Teradata
+      dsn: tdwc_dsn
+    sql:
+     - delete from sandbox.agml_merchants_report where day_key=${date_key};
+
+move_from_temporary:
+  class: SQLExecute
+  dependencies:
+    - truncate_main_table
+  configuration:
+    db:
+      adapter: Teradata
+      dsn: tdwc_dsn
+    sql:
+     - insert into sandbox.agml_merchants_report select ${date_key}, a.* from sandbox.agml_merchants_report_tmp a;
+
+grant_select_data_table:
+  class: SQLExecute
+  dependencies:
+    - move_from_temporary
+  configuration:
+    db:
+      adapter: Teradata
+      dsn: tdwc_dsn
+    sql:
+     - GRANT SELECT ON sandbox.agml_merchants_report TO PUBLIC;

@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Knowledge_base>
+    <ResultSet name="seo_categories_with_names" region="na">
+        <column type="varchar" name="seo_id"/>
+        <column type="varchar" name="name"/>
+        <column type="varchar" name="singular"/>
+        <column type="varchar" name="url"/>
+        <column type="varchar" name="rootUrl"/>
+        <column type="varchar" name="rootName"/>
+        <column type="varchar" name="rootSingular"/>
+        <column type="varchar" name="parent1"/>
+        <column type="varchar" name="parent1_name"/>
+        <column type="varchar" name="parent2"/>
+        <column type="varchar" name="parent2_name"/>
+    </ResultSet>
+
+    <ResultSet name="seo_category_hierarchy" region="na">
+        <column type="varchar" name="seo_id"/>
+        <column type="varchar" name="top_level_category"/>
+        <column type="varchar" name="mid_level_category"/>
+        <column type="varchar" name="detail_category"/>
+    </ResultSet>
+    
+    <job name="parse categories" type="executeBash" command="python @parameter_script/ddl/parse_categories.py"
+            region="int">
+        <parameters type="queryParameter">
+            <keyvalue key="script" value="${HOME}/groupon-seo-admin/script"/>
+        </parameters>
+    </job>
+    
+    <job name="twbrmcp" type="executeBash" command="twbrmcp @parameter_user" 
+                            region="int">
+        <parameters type="queryParameter">
+            <keyvalue key="user" value="asnadden"/>
+        </parameters>
+    </job>
+
+    <job name="dropTable log table" type="dropTable" command="@parameter_table_name_log" 
+         region="na" connectionType="teradata">
+        <parameters type="queryParameter">
+            <keyvalue key="date" value="${datekey}"/>
+            <keyvalue key="table_name" value="seo_categories_with_names"/>
+            <keyvalue key="TargetDBName" value="sandbox"/>
+        </parameters>
+    </job>
+    
+    <job name="dropTable UV table" type="dropTable" command="@parameter_table_name_UV" 
+         region="na" connectionType="teradata">
+        <parameters type="queryParameter">
+            <keyvalue key="date" value="${datekey}"/>
+            <keyvalue key="table_name" value="seo_categories_with_names"/>
+            <keyvalue key="TargetDBName" value="sandbox"/>
+        </parameters>
+    </job>
+ 
+    <job name="dropTable ET table" type="dropTable" command="@parameter_table_name_ET" 
+         region="na" connectionType="teradata">
+        <parameters type="queryParameter">
+            <keyvalue key="date" value="${datekey}"/>
+            <keyvalue key="table_name" value="seo_categories_with_names"/>
+            <keyvalue key="TargetDBName" value="sandbox"/>
+        </parameters>
+    </job>
+    
+    <job name="dropTable temp table" type="dropTable" command="@parameter_table_name" 
+         region="int" connectionType="teradata">
+        <parameters type="queryParameter">
+            <keyvalue key="date" value="${datekey}"/>
+            <keyvalue key="table_name" value="seo_categories_with_names"/>
+            <keyvalue key="TargetDBName" value="sandbox"/>
+        </parameters>
+    </job> 
+    
+    <job name="dropTable seo_category_hierarchy" type="dropTable" command="@parameter_table_name" 
+         region="na" connectionType="teradata">
+        <parameters type="queryParameter">
+            <keyvalue key="date" value="${datekey}"/>
+            <keyvalue key="table_name" value="seo_category_hierarchy"/>
+            <keyvalue key="TargetDBName" value="sandbox"/>
+        </parameters>
+    </job>
+    
+    <job name="createTable seo_categories_with_names" type="createTable" command="seo_categories_with_names" 
+                            region="na" connectionType="teradata">
+        <parameters type="queryParameter">
+            <keyvalue key="db_host" value="10.20.88.35"/>
+            <keyvalue key="db_user" value="asnadden"/>
+            <keyvalue key="db_password" value="LetMeTD8"/>
+            <keyvalue key="date" value="${datekey}"/>
+            <keyvalue key="TargetDBName" value="sandbox"/>
+            <keyvalue key="TableIndex" value="UNIQUE PRIMARY INDEX ( seo_id )"/>
+        </parameters>
+        <columns>
+            <column name="seo_id" type="VARCHAR(36)"/>
+            <column name="name" type="VARCHAR(256)"/>
+            <column name="singular" type="VARCHAR(256)"/>
+            <column name="url" type="VARCHAR(256)"/>
+            <column name="rootUrl" type="VARCHAR(256)"/>
+            <column name="rootName" type="VARCHAR(256)"/>
+            <column name="rootSingular" type="VARCHAR(256)"/>
+            <column name="parent1" type="VARCHAR(36)"/>
+            <column name="parent1_name" type="VARCHAR(256)"/>
+            <column name="parent2" type="VARCHAR(36)"/>
+            <column name="parent2_name" type="VARCHAR(256)"/>
+        </columns>
+        <dependencies>
+            <dependent name='dropTable temp table'/>
+            <dependent name='dropTable ET table'/>
+            <dependent name='dropTable UV table'/>
+            <dependent name='dropTable log table'/>
+        </dependencies>
+    </job>
+
+    <job name="tdload" type="executeBash" command="tdload -h @parameter_host -u @parameter_user -p @parameter_password \
+                                    -f @parameter_DUMP_DIR/@parameter_datafilename -d @parameter_separator \
+                                    -t @parameter_GOOGLE_RESULT_TABLE_NAME --TargetWorkingDatabase @parameter_schema" 
+                            region="na">
+        <parameters type="queryParameter">
+            <keyvalue key="date" value="${datekey}"/>
+            <keyvalue key="host" value="10.20.88.35"/>
+            <keyvalue key="user" value="asnadden"/>
+            <keyvalue key="schema" value="sandbox"/>
+            <keyvalue key="password" value="LetMeTD8"/>
+            <keyvalue key="DUMP_DIR" value="${HOME}/dump/potential_keywords"/>
+            <keyvalue key="datafilename" value="current/categories_parsed.tsv"/>            
+            <keyvalue key="separator" value="&#34;TAB&#34;"/>
+            <keyvalue key="table_name" value="seo_categories_with_names"/>
+        </parameters>
+        <dependencies>
+            <dependent name='createTable seo_categories_with_names'/>
+            <dependent name='twbrmcp'/>
+            <dependent name='parse categories'/>
+        </dependencies>
+    </job>
+    
+    <job name="insert into seo_categories_with_names" type="executeSimpleQuery" command="insert_into_select_all_from" region="na" connectionType="teradata"> 
+        <parameters type="queryParameter">
+            <keyvalue key="target_db" value="sandbox"/>
+            <keyvalue key="source_db" value="sandbox"/>
+            <keyvalue key="target_table" value="seo_categories_with_names"/>
+            <keyvalue key="source_table" value="sandbox.seo_old_to_new_categories"/>
+        </parameters>
+        <dependencies>
+            <dependent name='tdload'/>
+        </dependencies>
+    </job>
+    
+    <job name="grant select seo_categories_with_names" type="executeSimpleQuery" command="grant_select_on_table" 
+                            region="na" connectionType="teradata">
+        <parameters type="queryParameter">
+            <keyvalue key="date" value="${datekey}"/>
+            <keyvalue key="dbname" value="sandbox"/>
+            <keyvalue key="tablename" value="seo_categories_with_names"/>
+        </parameters>
+        <dependencies>
+            <dependent name='insert into seo_categories_with_names'/>
+        </dependencies>
+    </job>
+    
+    <job name="truncate seo_categories_with_names" type="executeSimpleQuery" command="truncate_mysql_table" region="na" connectionType="mysql"> 
+        <parameters type="queryParameter">
+            <keyvalue key="TargetDBURL" value="marketing-analytics-db1.snc1"/>
+            <keyvalue key="TargetDBUser" value="seo_juicer"/>
+            <keyvalue key="TargetDBPassword" value="seo_juicer"/>
+            <keyvalue key="dbname" value="seo_analytics"/>
+            <!--keyvalue key="dbname" value="${dbname}"/-->
+            <keyvalue key="table_name" value="seo_categories_with_names"/>
+        </parameters>
+        <dependencies>
+            <dependent name='insert into seo_categories_with_names'/>
+        </dependencies>
+    </job>
+    
+    <job name="seo_categories_cleanup.sh" type="executeBash" command="./seo_categories_cleanup.sh @parameter_db_dump_dir " region="na">
+        <parameters type="queryParameter">
+            <keyvalue key="db_dump_dir" value="${HOME}/dump/categories"/>
+        </parameters>
+        <dependencies>
+            <dependent name='insert into seo_categories_with_names'/>
+        </dependencies>
+    </job>
+
+    <job name="load to marketing seo_categories_with_names" type="executeQuery" command="select_from" region="na" connectionType="teradata"> 
+         <parameters type="queryParameter">
+            <keyvalue key="source_table" value="sandbox.seo_categories_with_names"/>
+            <keyvalue key="SourceDBUser" value="asnadden"/>
+            <keyvalue key="SourceDBPassword" value="LetMeTD8"/>
+            <keyvalue key="TargetDBURL" value="marketing-analytics-db1.snc1"/>
+            <keyvalue key="TargetDBUser" value="seo_juicer"/>
+            <keyvalue key="TargetDBPassword" value="seo_juicer"/>
+            <keyvalue key="TargetDBName" value="seo_analytics"/>
+         </parameters>
+         <resultSet connectionType="mysql" name="seo_categories_with_names"/>
+         <dependencies>
+            <dependent name='truncate seo_categories_with_names'/>
+            <dependent name='grant select seo_categories_with_names'/>
+        </dependencies>   
+    </job>
+    
+    
+    <job name="seo_category_hierarchy.ddl" type="executeSimpleQuery" value="@parameter_script/ddl/seo_category_hierarchy.ddl" 
+                region="na" connectionType="teradata"> 
+        <parameters type="queryParameter">
+            <keyvalue key="script" value="${HOME}/groupon-seo-admin/script"/>
+        </parameters>
+        <dependencies>
+            <dependent name='dropTable seo_category_hierarchy'/>
+            <dependent name='insert into seo_categories_with_names'/>
+        </dependencies>
+    </job>
+    
+    <job name="grant select seo cat hier" type="executeSimpleQuery" command="grant_select_on_table" 
+                            region="na" connectionType="teradata">
+        <parameters type="queryParameter">
+            <keyvalue key="date" value="${datekey}"/>
+            <keyvalue key="dbname" value="sandbox"/>
+            <keyvalue key="tablename" value="seo_category_hierarchy"/>
+        </parameters>
+        <dependencies>
+            <dependent name='seo_category_hierarchy.ddl'/>
+        </dependencies>
+    </job>
+    
+    <job name="truncate seo_category_hierarchy" type="executeSimpleQuery" command="truncate_mysql_table" region="na" connectionType="mysql"> 
+        <parameters type="queryParameter">
+            <keyvalue key="TargetDBURL" value="marketing-analytics-db1.snc1"/>
+            <keyvalue key="TargetDBUser" value="seo_juicer"/>
+            <keyvalue key="TargetDBPassword" value="seo_juicer"/>
+            <keyvalue key="dbname" value="seo_analytics"/>
+            <!--keyvalue key="dbname" value="${dbname}"/-->
+            <keyvalue key="table_name" value="seo_category_hierarchy"/>
+        </parameters>
+        <dependencies>
+            <dependent name='seo_category_hierarchy.ddl'/>
+        </dependencies>
+    </job>
+
+    <job name="load to marketing seo_category_hierarchy" type="executeQuery" command="select_from" region="na" connectionType="teradata"> 
+        <parameters type="queryParameter">
+            <keyvalue key="source_table" value="sandbox.seo_category_hierarchy"/>
+            <keyvalue key="SourceDBUser" value="asnadden"/>
+            <keyvalue key="SourceDBPassword" value="LetMeTD8"/>
+            <keyvalue key="TargetDBURL" value="marketing-analytics-db1.snc1"/>
+            <keyvalue key="TargetDBUser" value="seo_juicer"/>
+            <keyvalue key="TargetDBPassword" value="seo_juicer"/>
+            <keyvalue key="TargetDBName" value="seo_analytics"/>
+        </parameters>
+        
+        <resultSet connectionType="mysql" name="seo_category_hierarchy"/>
+        
+        <dependencies>
+            <dependent name='truncate seo_category_hierarchy'/>
+            <dependent name='seo_category_hierarchy.ddl'/>
+        </dependencies>   
+    </job>
+
+</Knowledge_base>

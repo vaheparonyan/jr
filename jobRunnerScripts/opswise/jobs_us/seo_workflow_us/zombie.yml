@@ -1,0 +1,202 @@
+prepare_workflow_dates:
+  class: ScriptTask
+  emits:
+    - date_key
+    - date_value
+    - end_date_key
+  configuration:
+    script: |
+      LAST_RUN=$(tdsql 'select max(event_day_key) from sandbox.as_bld_session_1st_pv_fcs where event_day_key >= 20150301')
+      NEXT_DATEKEY=$(date -d "$LAST_RUN 1 day" +%Y%m%d)
+      NEXT_DATEVALUE=$(date -d "$LAST_RUN 1 day" +%Y-%m-%d)
+      TODAY_DATEKEY=$(date +%Y%m%d)
+      echo "{'date_key': '$NEXT_DATEKEY', 'date_value': '$NEXT_DATEVALUE', 'end_date_key': '$TODAY_DATEKEY'}"
+
+check_fact_orders:
+  class: SQLRead
+  dependencies:
+    - prepare_workflow_dates
+  settings:
+    attempts: 60
+    cooldown: 900
+  configuration:
+    db:
+      adapter: Teradata
+      dsn: tdwc_dsn
+    sql:
+      - select count(*) as row_count from user_groupondw.fact_orders where order_date_key = ${date_key};
+  assertions:
+    - expression: ${row_count} > 150000
+      fail: true
+
+check_fact_collections:
+  class: SQLRead
+  dependencies:
+    - prepare_workflow_dates
+  settings:
+    attempts: 60
+    cooldown: 900
+  configuration:
+    db:
+      adapter: Teradata
+      dsn: tdwc_dsn
+    sql:
+      - select count(*) as row_count from user_groupondw.fact_collections where order_date_key = ${date_key};
+  assertions:
+    - expression: ${row_count} > 150000
+      fail: true
+
+check_fact_clickstream:
+  class: SQLRead
+  dependencies:
+    - prepare_workflow_dates
+  settings:
+    attempts: 60
+    cooldown: 900
+  configuration:
+    db:
+      adapter: Teradata
+      dsn: tdwc_dsn
+    sql:
+      - select count(*) as row_count from user_groupondw.fact_clickstream where event_type_key = 2 and event_date = '${date_value}';
+  assertions:
+    - expression: ${row_count} > 5000000
+      fail: true
+
+load_na_bld_session_table_fcs:
+  class: SQLExecute
+  dependencies:
+    - check_fact_orders
+    - check_fact_collections
+    - check_fact_clickstream
+  configuration:
+    db:
+      adapter: Teradata
+      dsn: tdwc_dsn
+    sql_file: load_na_bld_session_table_fcs.sql
+
+load_bld_local_metrics_fcs:
+  class: SQLExecute
+  dependencies:
+    - load_na_bld_session_table_fcs
+  configuration:
+    db:
+      adapter: Teradata
+      dsn: tdwc_dsn
+    sql_file: load_bld_local_metrics_fcs.sql
+
+load_bld_biz_metrics_fcs:
+  class: SQLExecute
+  dependencies:
+    - load_bld_local_metrics_fcs
+  configuration:
+    db:
+      adapter: Teradata
+      dsn: tdwc_dsn
+    sql_file: load_bld_biz_metrics_fcs.sql
+
+update_deal_counts:
+  class: SQLExecute
+  dependencies:
+    - load_bld_biz_metrics_fcs
+  configuration:
+    db:
+      adapter: Teradata
+      dsn: tdwc_dsn
+    sql_file: update_deal_counts.sql
+
+load_bld_session_exp_metrics_fcs:
+  class: SQLExecute
+  dependencies:
+    - update_deal_counts
+  configuration:
+    db:
+      adapter: Teradata
+      dsn: tdwc_dsn
+    sql_file: load_bld_session_exp_metrics_fcs.sql
+
+load_bot_view_test_metrics:
+  class: SQLExecute
+  dependencies:
+    - load_bld_session_exp_metrics_fcs
+  configuration:
+    db:
+      adapter: Teradata
+      dsn: tdwc_dsn
+    sql_file: load_bot_view_test_metrics.sql
+
+load_seo_url_metrics:
+  class: SQLExecute
+  dependencies:
+    - load_bot_view_test_metrics
+  configuration:
+    db:
+      adapter: Teradata
+      dsn: tdwc_dsn
+    sql_file: load_seo_url_metrics.sql
+
+copy_subset_to_mysql_as_bld_session_metrics_fcs:
+  class: ScriptTask
+  dependencies:
+    - load_seo_url_metrics
+  configuration:
+    script: /home/juicer/groupon-seo-admin/script/copy_subset_to_mysql as_bld_session_metrics_fcs event_day_key ${date_key} ${end_date_key} bld_session_metrics_fcs
+
+copy_subset_to_mysql_fact_article_page_metrics:
+  class: ScriptTask
+  dependencies:
+    - copy_subset_to_mysql_as_bld_session_metrics_fcs
+  configuration:
+    script: /home/juicer/groupon-seo-admin/script/copy_subset_to_mysql fact_article_page_metrics log_date_key ${date_key} ${end_date_key}
+
+copy_to_mysql_as_deals_launched_count:
+  class: ScriptTask
+  dependencies:
+    - copy_subset_to_mysql_fact_article_page_metrics
+  configuration:
+    script: /home/juicer/groupon-seo-admin/script/copy_to_mysql as_deals_launched_count deals_launched_count
+
+copy_subset_to_mysql_as_bld_local_metrics_fcs:
+  class: ScriptTask
+  dependencies:
+    - copy_to_mysql_as_deals_launched_count
+  configuration:
+    script: /home/juicer/groupon-seo-admin/script/copy_subset_to_mysql as_bld_local_metrics_fcs event_day_key ${date_key} ${end_date_key} bld_local_metrics_fcs
+
+# TODO
+# There is a bug with the job XML file, in practice, the following task is not running in production
+# Lets keep the same behavior here until we validate Opswise vs jobRunner outputs
+# After that, we can enable and test this section.
+#
+#copy_subset_to_mysql_as_bld_biz_metrics_fcs:
+#  class: ScriptTask
+#  dependencies:
+#    - copy_subset_to_mysql_as_bld_local_metrics_fcs
+#  configuration:
+#    script: /home/juicer/groupon-seo-admin/script/copy_subset_to_mysql as_bld_biz_metrics_fcs event_day_key ${date_key} ${end_date_key} bld_biz_metrics_fcs
+
+copy_subset_to_mysql_as_bld_session_exp_metrics_fcs:
+  class: ScriptTask
+  dependencies:
+   # See TODO comments above
+   #- copy_subset_to_mysql_as_bld_biz_metrics_fcs
+    - copy_subset_to_mysql_as_bld_local_metrics_fcs
+  configuration:
+    script: /home/juicer/groupon-seo-admin/script/copy_subset_to_mysql as_bld_session_exp_metrics_fcs event_day_key ${date_key} ${end_date_key} bld_session_exp_metrics_fcs
+#
+copy_subset_to_mysql_as_bot_view_test_metrics:
+  class: ScriptTask
+  dependencies:
+    - copy_subset_to_mysql_as_bld_session_exp_metrics_fcs
+  configuration:
+    script: /home/juicer/groupon-seo-admin/script/copy_subset_to_mysql as_bot_view_test_metrics event_day_key ${date_key} ${end_date_key} bot_view_test_metrics
+
+create_seo_na_operational_cube:
+  class: SQLExecute
+  dependencies:
+    - copy_subset_to_mysql_as_bot_view_test_metrics
+  configuration:
+    db:
+      adapter: Mysql
+      dsn: seo_analytics_dsn
+    sql_file: seo_na_operational_cube.sql

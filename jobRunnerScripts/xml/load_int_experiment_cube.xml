@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Knowledge_base>
+
+    
+    <job name="load int bld session experiments" type="executeSimpleQuery" 
+            command="load_int_bld_session_experiments" 
+            region="int" connectionType="teradata">
+        <parameters>
+            <keyvalue key="dtkey" value="${datekey}"/>
+            <keyvalue key="date" value="${date}"/>
+        </parameters>
+        <dependencies>
+        </dependencies> 
+    </job>
+</Knowledge_base>    

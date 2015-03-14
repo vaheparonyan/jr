@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Knowledge_base>
+    <job name="get bot view exp " type="executeBash" command="source /home/rgarimella/.bashrc ;  tda &#60; @parameter_sdir/get_cities_traffic.sql &#62; @parameter_wdir/cities_traffic.tsv"
+                            region="na">
+        <parameters>
+            <keyvalue key="wdir" value="/home/rgarimella/experiment_project/output"/>
+            <keyvalue key="sdir" value="/home/rgarimella/experiment_project/scripts"/>
+        </parameters>
+        <dependencies>
+        </dependencies>
+    </job>
+    
+    <job name="Getting proximity cities from postgres" type="executeBash" command="ssh seo-api2-staging.snc1 psql -U postgres -d seogeo -A -F , -X -t -f /home/juicer/get_cities_50miles_proximity.sql -o proximity_cities.tsv"
+                            region="na">
+        <parameters>
+            <keyvalue key="dummy" value="dummy"/>
+        </parameters>
+         <dependencies>
+        </dependencies>
+    </job>
+    
+
+    <job name="Move data to seo-util2.sync1" type="executeBash" 
+            command="scp seo-api2-staging:/home/rgarimella/proximity_cities.tsv @parameter_wdir"
+                            region="na">
+        <parameters>
+            <keyvalue key="wdir" value="/home/rgarimella/experiment_project/output"/>
+        </parameters>
+        <dependencies>
+            <dependent name="Getting proximity cities from postgres" />
+        </dependencies>
+    </job>
+
+
+    <job name="truncate tables" type="executeBash" command="source /home/rgarimella/.bashrc ;  tda &#60; @parameter_sdir/truncate_tables.sql;" 
+                            region="na">
+        <parameters>
+            <keyvalue key="sdir" value="/home/rgarimella/experiment_project/scripts"/>
+        </parameters>
+        <dependencies>
+            <dependent name="Move data to seo-util2.sync1"/>
+        </dependencies>
+    </job>
+
+    <job name="load proximity cities to teradata" type="executeBash" command="source /home/rgarimella/.bashrc ; tdl -f @parameter_wdir/proximity_cities.tsv -d ',' -t rg_proximity_cities --TargetWorkingDatabase sandbox" 
+                            region="na">
+        <parameters>
+            <keyvalue key="wdir" value="/home/rgarimella/experiment_project/output"/>
+            <keyvalue key="sdir" value="/home/rgarimella/experiment_project/scripts"/>
+        </parameters>
+        <dependencies>
+            <dependent name="truncate tables"/>
+        </dependencies>
+    </job>
+
+
+</Knowledge_base>

@@ -1,0 +1,11 @@
+java -Djava.security.egd=file:/dev/./urandom -jar dist/Job-runner.jar -env production -region na -start_day 2014-02-28 -end_day 2014-03-01 -jobs searchmetrics.xml -date_range true
+java -Djava.security.egd=file:/dev/./urandom -jar dist/Job-runner.jar -env production -region na -start_day 2014-03-07 -end_day 2014-03-08 -jobs searchmetrics.xml -date_range true
+java -Djava.security.egd=file:/dev/./urandom -jar dist/Job-runner.jar -env production -region na -start_day 2014-03-14 -end_day 2014-03-15 -jobs searchmetrics.xml -date_range true
+java -Djava.security.egd=file:/dev/./urandom -jar dist/Job-runner.jar -env production -region na -start_day 2014-03-21 -end_day 2014-03-22 -jobs searchmetrics.xml -date_range true
+java -Djava.security.egd=file:/dev/./urandom -jar dist/Job-runner.jar -env production -region na -start_day 2014-03-28 -end_day 2014-03-29 -jobs searchmetrics.xml -date_range true
+java -Djava.security.egd=file:/dev/./urandom -jar dist/Job-runner.jar -env production -region na -start_day 2014-04-04 -end_day 2014-04-05 -jobs searchmetrics.xml -date_range true
+java -Djava.security.egd=file:/dev/./urandom -jar dist/Job-runner.jar -env production -region na -start_day 2014-04-11 -end_day 2014-04-12 -jobs searchmetrics.xml -date_range true
+java -Djava.security.egd=file:/dev/./urandom -jar dist/Job-runner.jar -env production -region na -start_day 2014-04-18 -end_day 2014-04-19 -jobs searchmetrics.xml -date_range true
+java -Djava.security.egd=file:/dev/./urandom -jar dist/Job-runner.jar -env production -region na -start_day 2014-04-25 -end_day 2014-04-26 -jobs searchmetrics.xml -date_range true
+java -Djava.security.egd=file:/dev/./urandom -jar dist/Job-runner.jar -env production -region na -start_day 2014-05-02 -end_day 2014-05-03 -jobs searchmetrics.xml -date_range true
+java -Djava.security.egd=file:/dev/./urandom -jar dist/Job-runner.jar -env production -region na -start_day 2014-05-16 -end_day 2014-05-17 -jobs searchmetrics.xml -date_range true

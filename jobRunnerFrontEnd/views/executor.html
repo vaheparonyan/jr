@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html>
+
+<link rel=stylesheet href="../thirdParty/CodeMirror/doc/docs.css">
+<link rel="stylesheet" href="../thirdParty/CodeMirror/lib/codemirror.css">
+<script src="../thirdParty/CodeMirror/lib/codemirror.js"></script>
+<script src="../thirdParty/CodeMirror/addon/runmode/runmode.js"></script>
+<script src="../thirdParty/CodeMirror/mode/xml/xml.js"></script>
+
+
+<head>
+    <link href="/thirdParty/bootstrap3/css/bootstrap.css" rel="stylesheet" media="screen">
+    <link title="no title" media="screen" type="text/css" href="/css/executor.css" rel="stylesheet">
+    <title>JobRunner Executor</title>
+</head>
+<body>
+    <script src="/thirdParty/js/d3.v3.min.js"></script>
+    <script src="/thirdParty/js/d3.rollup.v0.min.js"></script>
+
+
+    <script type="text/javascript" src="../thirdParty/js/jquery-1.10.2.min.js"></script>
+    <script src="/thirdParty/bootstrap3/js/bootstrap.js"></script>
+
+    <div class="container centered" id="container" style="padding: 0px;margin-top: 100px;">
+
+        <div class="col-sx-8 col-sm-8 col-md-8 col-lg-8 padding-left" style="padding: 0px">
+
+            <div class="row" style="margin-right: 10px; margin-top: 30px;">
+                <!--div class="col-sx-5 col-sm-5 col-md-5 col-lg-5 padding-left" style="margin-top: 10px">
+                    <fieldset>
+                        <legend> Group </legend>
+                        <select style="width: 100%" title='-env <env_name>' id="grouptype" style="">
+                            <option value="seo">SEO</option>
+                            <option value="wbr_cubes">WBR Cubes</option>
+                            <option value="display">Display</option>
+                        </select>
+                    </fieldset>
+                </div-->
+                <div class="col-sx-3 col-sm-3 col-md-3 col-lg-3 padding-left" style="margin-top: 10px">
+                    <fieldset>
+                        <legend> Environment </legend>
+                        <select style="width: 100%" title='-env <env_name>' id="env" style="">
+                            <option value="production">production</option>
+                            <option value="development">development</option>
+                            <option value="staging">staging</option>
+                        </select>
+                    </fieldset>
+                </div>
+
+                <div class="col-sx-2 col-sm-2 col-md-2 col-lg-2 padding-left" style="margin-bottom: 10px; margin-top: 10px">
+                    <fieldset>
+                        <legend> Region </legend>
+                        <select style="width: 100%" title='-region <region_name>' id="region" style="">
+                            <option value="na">na</option>
+                            <option value="intl">intl</option>
+                            <option value="needish">needish</option>
+                        </select>
+                    </fieldset>
+                </div>
+
+                <div class="col-sx-2 col-sm-2 col-md-2 col-lg-2 padding-left" style="margin-bottom: 10px; margin-top: 10px">
+                    <fieldset>
+                        <legend> Range </legend>
+                        <select style="width: 100%" title='-date_range ::= <boolean>' id="date_range">
+                            <option value="true">true</option>
+                            <option value="false">false</option>
+                        </select>
+                    </fieldset>
+                </div>
+            </div>
+
+
+            <div class="row" style="margin-right: 10px; margin-top: 30px;">
+                <div class="col-sx-6 col-sm-6 col-md-6 col-lg-6 padding-left" style="margin-top: 10px">
+                    <fieldset>
+                        <legend> The XML file name </legend>
+                        <select style="width: 100%" title='-jobs <xml_file>' id="jobs" placeholder="xml file containing the jobs">
+                            %xmlOptions%
+                        </select>
+                    </fieldset>
+                </div>
+                <div class="col-sx-3 col-sm-3 col-md-3 col-lg-3 padding-left" style="margin-top: 10px">
+                    <fieldset>
+                        <legend> Start Day </legend>
+                        <input style="width: 100%" title='If the <start_day> is missing then the only jobs that does not have dependency from <date> will be executed. Start day should be specified in yyyy-MM-dd format.'
+                               id="start_day" type="text" placeholder="start day">
+                    </fieldset>
+                </div>
+
+                <div class="col-sx-3 col-sm-3 col-md-3 col-lg-3 padding-left" style="margin-bottom: 10px; margin-top: 10px">
+                    <fieldset >
+                        <legend> End Day </LEGEND>
+                        <input style="width: 100%" title='require <start_date>. End day should be specified in yyyy-MM-dd format '
+                               id="end_day" type="text" placeholder="end day">
+                    </fieldset>
+                </div>
+            </div>
+
+            <div class="row" style="margin-right: 10px; margin-top: 30px;">
+                <div class="col-sx-12 col-sm-12 col-md-12 col-lg-12 padding-left" style="margin-top: 10px">
+                    <fieldset>
+                        <legend> Command Line </legend>
+                        <textarea readonly title="The command line to be executed." rows="3" id="commandline" style="width: 100%; resize: none" ></textarea>
+                    </fieldset>
+                </div>
+            </div>
+
+        
+            <div class="row" style="margin-right: 10px ; margin-top: 30px;">
+                <div class="col-sx-2 col-sm-2 col-md-2 col-lg-2 padding-left" style="margin-top: 10px">
+                    <button type="button" onclick="location.href = '/';" class="btn btn-default btn-md submit-button">Back</button>
+                </div>
+
+                <div class="col-sx-8 col-sm-8 col-md-8 col-lg-8" style="margin-top: 10px">
+                    <p id="submittedJob" class="submittedJob" style="color: blue; text-align: center;" hidden> Job Submitted successfully. </p>
+                </div>
+
+                <div class="col-sx-2 col-sm-2 col-md-2 col-lg-2 padding-left" style="margin-top: 10px">
+                    <button type="button" id="executeJob" class="btn btn-default btn-md" onclick="executeJob()">Execute Job</button>
+                </div>
+            </div>
+        </div>
+        <div class="col-sx-4 col-sm-4 col-md-4 col-lg-4 padding-left" style="padding: 0px; margin-top: 30px;">
+
+            <ul class="nav nav-tabs" role="tablist" id="myTab">
+                <li class="active"><a href="#graphview" role="tab" data-toggle="tab">Graph View</a></li>
+                <li><a href="#xmlview" role="tab" data-toggle="tab">XML View</a></li>
+            </ul>
+
+            <div class="tab-content">
+                <div class="tab-pane active" id="graphview">
+                    <div class="col-sx-12 col-sm-12 col-md-12 col-lg-12 padding-left" id="visualXML" style="margin-top: 10px;margin-top: 40px;">
+                    </div>
+                </div>
+                <div class="tab-pane" id="xmlview">
+                    <div class="col-sx-12 col-sm-12 col-md-12 col-lg-12 padding-left" style="margin-top: 10px;margin-top: 40px;">
+                        <article style="border: 0 none; padding: 0px; width: 150%">
+                        <pre id="xmlcontent" class="cm-s-default"
+                             style="margin-right: 0px;
+                                height: 350px;
+                                overflow: auto;word-break: normal !important;
+                                word-wrap: normal !important;white-space: pre !important;">
+                        </pre>
+
+                        </article>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="text/javascript" src="../thirdParty/js/jquery-1.10.2.min.js"></script>
+
+    <script>
+        var cmdLineTemplate = "java%java_args% -jar /var/groupon/apps/job_runner/jobRunner/current/dist/Job-runner.jar%env%%region%%start_day%%end_day%%jobs%%date_range%";
+
+        function executeJob() {
+            $.post(
+                "/execute",
+                {commandline: document.getElementById("commandline").value },
+                {job_group: QueryString.job_group },
+                function(data, status){
+                    if (status !== "success") {
+                        alert("The execute operation failed on server.");
+                    } else {
+                        //alert("The execute operation succeeded on server.")
+                    }
+                });
+            //location.reload();
+            disableExecuteJobs(true);
+            document.getElementById("submittedJob").hidden = false;
+        }
+
+        function showCommandLine(cmd) {
+            var ar = ["env", "region", "date_range", "jobs", "start_day", "end_day" ];
+            var command = cmd;
+            command = command.replace("%java_args%", " -Djava.security.egd=file:/dev/./urandom");
+            for (var i=0; i < ar.length; i++) {
+                var val = document.getElementById(ar[i]).value;
+                if (val) {
+                    val = " -" +  ar[i] + " " + val;
+                }
+                command = command.replace("%" + ar[i] + "%", val);
+            }
+            document.getElementById("commandline").value = command;
+        }
+
+        function doHighlight(text) {
+            CodeMirror.runMode(text, "application/xml",
+                    document.getElementById("xmlcontent"));
+        }
+
+        function showJobContent(xmlFile) {
+            var xmlContent = document.getElementById("xmlcontent");
+            if (xmlFile !== "") {
+                $.get(
+                    "/getXmlContent",
+                    {xmlFile: xmlFile },
+                    function(data, status){
+                        if (status !== "success") {
+                            alert("The execute operation failed on server.");
+                        } else {
+                            doHighlight(data);
+                        }
+                    });
+            } else {
+                doHighlight("");
+            }
+        }
+
+        $(function () {
+            $('#region').change(function () {
+                var val =  $(this).val();
+                if (val) {
+                    val = " -region " + val;
+                }
+                var cmd = cmdLineTemplate.replace("%region%", val);
+                document.getElementById("submittedJob").hidden = true;
+                disableExecuteJobs(false);
+                showCommandLine(cmd);
+            });
+
+            $('#date_range').change(function () {
+                var val =  $(this).val();
+                if (val) {
+                    val = " -date_range " + val;
+                }
+                var cmd = cmdLineTemplate.replace("%date_range%", val);
+
+                document.getElementById("submittedJob").hidden = true;
+                disableExecuteJobs(false);
+                showCommandLine(cmd);
+            });
+
+            $('#jobs').change(function () {
+                var fileName =  $(this).val();
+
+                var val = fileName;
+                if (val) {
+                    val = " -jobs " + val;
+                    disableExecuteJobs(false);
+                } else {
+                    disableExecuteJobs(true);
+                }
+
+                var cmd = cmdLineTemplate.replace("%jobs%", val);
+
+                document.getElementById("submittedJob").hidden = true;
+
+                showJobContent(this.value);
+                renderXML(fileName);
+                showCommandLine(cmd);
+            });
+
+            $('#start_day').change(function () {
+                var dateReg = /^20\d{2}[-](0[1-9]|1[0-2])[-]([0-2][0-9]|3[0-1])$/;
+
+                var matched = this.value.match(dateReg);
+                if (matched || !this.value) {
+                    disableExecuteJobs(false);
+                    this.className = "";
+                } else {
+                    this.className = "error_day";
+                    disableExecuteJobs(true);
+                }
+
+                if (matched) {
+                    var endDay = document.getElementById("end_day").value;
+                    if (endDay) {
+                        var arrStDay = this.value.split("-");
+                        var arrEndDay = endDay.split("-");
+
+                        if( parseInt(arrEndDay[0]+arrEndDay[1]+arrEndDay[2]) <
+                                parseInt(arrStDay[0]+arrStDay[1]+arrStDay[2])) {
+
+                            this.className = "error_day";
+                            document.getElementById("end_day").className = "error_day";
+                            disableExecuteJobs(true);
+                        } else {
+                            this.className = "";
+                            document.getElementById("end_day").className = "";
+                            disableExecuteJobs(false);
+                        }
+                    } else {
+                        this.className = "error_day";
+                        document.getElementById("end_day").className = "error_day";
+                        disableExecuteJobs(true);
+                    }
+                }
+                var val = "";
+                if (this.value) {
+                    val = " -start_day " + this.value;
+                }
+
+                var cmd = cmdLineTemplate.replace("%start_day%", val);
+
+                document.getElementById("submittedJob").hidden = true;
+                showCommandLine(cmd);
+            });
+
+            $('#end_day').change(function () {
+
+                var dateReg = /^20\d{2}[-](0[1-9]|1[0-2])[-]([0-2][0-9]|3[0-1])$/;
+
+                var matched = this.value.match(dateReg);
+                if (matched || !this.value) {
+                    disableExecuteJobs(false);
+                    this.className = "";
+                } else {
+                    this.className = "error_day";
+                    disableExecuteJobs(true);
+                }
+
+                if (matched) {
+                    var stDay = document.getElementById("start_day").value;
+                    if (stDay) {
+                        var arrStDay = stDay.split("-");
+                        var arrEndDay = this.value.split("-");
+
+                        if( parseInt(arrEndDay[0]+arrEndDay[1]+arrEndDay[2]) <
+                                parseInt(arrStDay[0]+arrStDay[1]+arrStDay[2])) {
+
+                            this.className = "error_day";
+                            document.getElementById("start_day").className = "error_day";
+                            disableExecuteJobs(true);
+                        } else {
+                            this.className = "";
+                            document.getElementById("start_day").className = "";
+                            disableExecuteJobs(false);
+                        }
+                    } else {
+                        this.className = "error_day";
+                        document.getElementById("start_day").className = "error_day";
+                        disableExecuteJobs(true);
+                    }
+                }
+                var val = "";
+                if (this.value) {
+                    val = " -end_day " + this.value;
+                }
+
+                var cmd = cmdLineTemplate.replace("%end_day%", val);
+
+                document.getElementById("submittedJob").hidden = true;
+                showCommandLine(cmd);
+            });
+
+            $('#env').change(function () {
+                var val =  $(this).val();
+                if (val) {
+                    val = " -env " + val;
+                }
+                var cmd = cmdLineTemplate.replace("%env%", val);
+                document.getElementById("submittedJob").hidden = true;
+                disableExecuteJobs(false);
+                showCommandLine(cmd);
+            });
+        });
+
+        function disableExecuteJobs(val) {
+            if (document.getElementById("start_day").className == "error_day" ||
+                    document.getElementById("end_day").className == "error_day" ||
+                    document.getElementById("jobs").value == "") {
+                val = true;
+            }
+            document.getElementById("executeJob").disabled = val;
+        }
+
+        var QueryString = function () {
+            // This function is anonymous, is executed immediately and
+            // the return value is assigned to QueryString!
+            var query_string = {};
+            var query = window.location.search.substring(1);
+            var vars = query.split("&");
+            for (var i=0;i<vars.length;i++) {
+                var pair = vars[i].split("=");
+                // If first entry with this name
+                if (typeof query_string[pair[0]] === "undefined") {
+                    query_string[pair[0]] = pair[1];
+                    // If second entry with this name
+                } else if (typeof query_string[pair[0]] === "string") {
+                    var arr = [ query_string[pair[0]], pair[1] ];
+                    query_string[pair[0]] = arr;
+                    // If third or later entry with this name
+                } else {
+                    query_string[pair[0]].push(pair[1]);
+                }
+            }
+            return query_string;
+        } ();
+
+        $( document ).ready(function() {
+            showCommandLine(cmdLineTemplate);
+            QueryString.job_group;
+        });
+
+    </script>
+
+
+    <script>
+
+        var margin = {top: 20, right: 120, bottom: 20, left: 40},
+            width = 1960 - margin.right - margin.left,
+            height = 500 - margin.top - margin.bottom;
+
+        var i = 0,
+            duration = 50,
+            root;
+
+        var tree = d3.layout.tree()
+                .size([height, width]);
+
+        var diagonal = d3.svg.diagonal()
+                .projection(function (d) {
+                    return [d.y, d.x];
+                });
+
+        document.getElementById("visualXML").innerHTML = "";
+        var svg = d3.select(document.getElementById("visualXML")).append("svg")
+                .attr("width", width + margin.right + margin.left)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        function renderXML(fileName) {
+            document.getElementById("visualXML").innerHTML = "";
+
+
+            if (fileName !== "" ) {
+                svg = d3.select(document.getElementById("visualXML")).append("svg")
+                        .attr("width", width + margin.right + margin.left)
+                        .attr("height", height + margin.top + margin.bottom)
+                        .append("g")
+                        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+                d3.json("/xmlgraphview?file=" + fileName, function (error, json) {
+
+                    root = json;
+                    root.x0 = height / 2;
+                    root.y0 = 0;
+
+                    function collapse(d) {
+                        if (d.children) {
+                            d._children = d.children;
+                            d._children.forEach(collapse);
+                            d.children = null;
+                        }
+                    }
+
+                    //root.children.forEach(collapse);
+                    update(root);
+                });
+                d3.select(self.frameElement).style("height", "800px");
+            }
+        }
+
+        function update(source) {
+
+            // Compute the new tree layout.
+            var nodes = tree.nodes(root).reverse();
+
+            var map = new Object();
+            for (var k = nodes.length - 1; k >= 0; k--){
+                map[nodes[k].name] = nodes[k];
+            }
+
+
+            nodes.forEach(function(d){
+                d.x = map[d.name].x;
+                d.y = map[d.name].y;
+                d.depth = map[d.name].depth;
+            });
+
+            var links = tree.links(nodes);
+
+            // Normalize for fixed-depth.
+            nodes.forEach(function (d) {
+                d.y = d.depth * 180;
+            });
+
+                // Update the nodes…
+                var node = svg.selectAll("g.node")
+                        .data(nodes, function (d) {
+                            return d.id || (d.id = ++i);
+                        });
+
+                // Enter any new nodes at the parent's previous position.
+                var nodeEnter = node.enter().append("g")
+                        .attr("class", "node")
+                        .attr("transform", function (d) {
+                            return "translate(" + source.y0 + "," + source.x0 + ")";
+                        })
+                        .on("click", click);
+
+                nodeEnter.append("circle")
+                        .attr("r", 1e-6)
+                        .style("fill", function (d) {
+                            return d._children ? "lightsteelblue" : "#fff";
+                        });
+
+                nodeEnter.append("text")
+                        .attr("x", function (d) {
+                            return d.children || d._children ? -10 : 10;
+                        })
+                        .attr("dy", ".35em")
+                        .attr("text-anchor", function (d) {
+                            return d.children || d._children ? "end" : "start";
+                        })
+                        .text(function (d) {
+                            return d.name;
+                        })
+                        .style("fill-opacity", 1e-6);
+
+                // Transition nodes to their new position.
+                var nodeUpdate = node.transition()
+                        .duration(duration)
+                        .attr("transform", function (d) {
+                            return "translate(" + d.y + "," + d.x + ")";
+                        });
+
+                nodeUpdate.select("circle")
+                        .attr("r", 4.5)
+                        .style("fill", function (d) {
+                            return d._children ? "lightsteelblue" : "#fff";
+                        });
+
+                nodeUpdate.select("text")
+                        .style("fill-opacity", 1);
+
+                // Transition exiting nodes to the parent's new position.
+                var nodeExit = node.exit().transition()
+                        .duration(duration)
+                        .attr("transform", function (d) {
+                            return "translate(" + source.y + "," + source.x + ")";
+                        })
+                        .remove();
+
+                nodeExit.select("circle")
+                        .attr("r", 1e-6);
+
+                nodeExit.select("text")
+                        .style("fill-opacity", 1e-6);
+
+                // Update the links…
+                var link = svg.selectAll("path.link")
+                        .data(links, function (d) {
+                            return d.target.id;
+                        });
+
+                // Enter any new links at the parent's previous position.
+                link.enter().insert("path", "g")
+                        .attr("class", "link")
+                        .attr("d", function (d) {
+                            var o = {x: source.x0, y: source.y0};
+                            return diagonal({source: o, target: o});
+                        });
+
+                // Transition links to their new position.
+                link.transition()
+                        .duration(duration)
+                        .attr("d", diagonal);
+
+                // Transition exiting nodes to the parent's new position.
+                link.exit().transition()
+                        .duration(duration)
+                        .attr("d", function (d) {
+                            var o = {x: source.x, y: source.y};
+                            return diagonal({source: o, target: o});
+                        })
+                        .remove();
+
+                // Stash the old positions for transition.
+                nodes.forEach(function (d) {
+                    d.x0 = d.x;
+                    d.y0 = d.y;
+                });
+            }
+
+
+        // Toggle children on click.
+        function click(d) {
+            if (d.children) {
+                d._children = d.children;
+                d.children = null;
+            } else {
+                d.children = d._children;
+                d._children = null;
+            }
+            update(d);
+        }
+
+    </script>
+
+
+
+</body>
+
+</html>

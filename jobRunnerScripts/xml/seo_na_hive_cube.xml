@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Knowledge_base>
+    
+
+    <job name="get hive session counts" type="executeHiveQuery" 
+         command="hql/get_session_counts.hql"
+            query_type="file"
+            region="na"  onerror="retry" retry="10" retryperiod="300"> 
+        <parameters>
+            <keyvalue key="date" value="${date}"/>
+        </parameters>
+        <variables>
+            <hivevar key="date_value" value="@parameter_date"/>
+            <hivevar key="db_name" value="seo_cubes"/>
+        </variables>
+    </job>
+
+    <job name="get first page view sessions" type="executeHiveQuery" 
+         command="hql/get_1pv_sessions.hql"
+            query_type="file"
+            region="na" onerror="retry" retry="10" retryperiod="300">
+        <parameters>
+            <keyvalue key="date" value="${date}"/>
+        </parameters>
+        <variables>
+            <hivevar key="date_value" value="@parameter_date"/>
+            <hivevar key="db_name" value="seo_cubes"/>
+        </variables>
+        <dependencies>
+            <dependent name="get hive session counts"/>
+        </dependencies>
+    </job>
+
+
+    <job name="get experiments data" type="executeHiveQuery" 
+         command="hql/get_experiment_data.hql"
+            query_type="file"
+            region="na" onerror="retry" retry="10" retryperiod="300">
+        <parameters>
+            <keyvalue key="date" value="${date}"/>
+        </parameters>
+        <variables>
+            <hivevar key="date_value" value="@parameter_date"/>
+            <hivevar key="db_name" value="seo_cubes"/>
+        </variables>
+    </job>
+
+    <job name="get expired deal pages" type="executeHiveQuery" 
+         command="hql/get_expired_deal_pages.hql"
+            query_type="file"
+            region="na" onerror="retry" retry="10" retryperiod="300">
+        <parameters>
+            <keyvalue key="date" value="${date}"/>
+        </parameters>
+        <variables>
+            <hivevar key="date_value" value="@parameter_date"/>
+            <hivevar key="db_name" value="seo_cubes"/>
+        </variables>
+    </job>
+
+    <job name="get orders tmp" type="executeHiveQuery" 
+         command="hql/get_orders_tmp.hql"
+            query_type="file"
+            region="na" onerror="retry" retry="10" retryperiod="300">
+        <parameters>
+            <keyvalue key="date" value="${date}"/>
+            <keyvalue key="dtkey" value="${datekey}"/>
+        </parameters>
+        <variables>
+            <hivevar key="date_value" value="@parameter_date"/>
+            <hivevar key="date_key" value="@parameter_dtkey"/>
+            <hivevar key="db_name" value="seo_cubes"/>
+        </variables>    </job>    
+
+
+
+    <job name="get marketing ref key data" type="executeHiveQuery" 
+         command="hql/get_mktg_ref_key.hql"
+            query_type="file"
+            region="na" onerror="retry" retry="10" retryperiod="300">
+        <parameters>
+            <keyvalue key="date" value="${date}"/>
+        </parameters>
+        <variables>
+            <hivevar key="date_value" value="@parameter_date"/>
+            <hivevar key="db_name" value="seo_cubes"/>
+        </variables>
+        <dependencies>
+            <dependent name="get first page view sessions"/>
+        </dependencies>
+    </job>
+
+    <job name="get marketing ref key attributes" type="executeHiveQuery" 
+         command="hql/get_mktg_ref_key_attributes.hql"
+            query_type="file"
+            region="na" onerror="retry" retry="10" retryperiod="300">
+        <parameters>
+            <keyvalue key="date" value="${date}"/>
+        </parameters>
+        <variables>
+            <hivevar key="date_value" value="@parameter_date"/>
+            <hivevar key="db_name" value="seo_cubes"/>
+        </variables>
+        <dependencies>
+            <dependent name="get first page view sessions"/>
+            <dependent name="get marketing ref key data"/>
+        </dependencies>    
+    </job>
+    
+    <job name="get page and traffic classification" type="executeHiveQuery" 
+         command="hql/get_page_and_traffic_classification.hql"
+            query_type="file"
+            region="na" onerror="retry" retry="10" retryperiod="300">
+        <parameters>
+            <keyvalue key="date" value="${date}"/>
+        </parameters>
+        <variables>
+            <hivevar key="date_value" value="@parameter_date"/>
+            <hivevar key="db_name" value="seo_cubes"/>
+        </variables>
+        <dependencies>
+            <dependent name="get first page view sessions"/>
+            <dependent name="get expired deal pages"/>
+        </dependencies>    
+    </job>
+
+    <job name="get referrer query string" type="executeHiveQuery" 
+         command="hql/get_referrer_query_string.hql"
+            query_type="file"
+            region="na" onerror="retry" retry="10" retryperiod="300">
+        <parameters>
+            <keyvalue key="date" value="${date}"/>
+        </parameters>
+        <variables>
+            <hivevar key="date_value" value="@parameter_date"/>
+            <hivevar key="db_name" value="seo_cubes"/>
+        </variables>
+        <dependencies>
+            <dependent name="get first page view sessions"/>
+        </dependencies>
+    </job>
+
+    <job name="get first pv all data" type="executeHiveQuery" 
+         command="hql/get_1pv_all_data.hql"
+            query_type="file"
+            region="na" onerror="retry" retry="10" retryperiod="300">
+        <parameters>
+            <keyvalue key="date" value="${date}"/>
+        </parameters>
+        <variables>
+            <hivevar key="date_value" value="@parameter_date"/>
+            <hivevar key="db_name" value="seo_cubes"/>
+        </variables>
+        <dependencies>
+            <dependent name="get marketing ref key attributes"/>
+             <dependent name="get page and traffic classification"/>
+             <dependent name="get referrer query string"/>
+        </dependencies>
+    </job>
+
+    <job name="get orders data" type="executeHiveQuery" 
+         command="hql/get_orders_data.hql"
+            query_type="file"
+            region="na" onerror="retry" retry="10" retryperiod="300">
+        <parameters>
+            <keyvalue key="date" value="${date}"/>
+            <keyvalue key="dtkey" value="${datekey}"/>
+        </parameters>
+        <variables>
+            <hivevar key="date_value" value="@parameter_date"/>
+            <hivevar key="date_key" value="@parameter_dtkey"/>    
+            <hivevar key="db_name" value="seo_cubes"/>
+        </variables>
+        <dependencies>
+            <dependent name="get hive session counts"/>
+            <dependent name="get orders tmp"/>
+        </dependencies>
+    </job>    
+
+
+    <job name="get new subscriptions" type="executeHiveQuery" 
+         command="hql/get_new_subscriptions.hql"
+            query_type="file"
+            region="na" onerror="retry" retry="10" retryperiod="300">
+        <parameters>
+            <keyvalue key="date" value="${date}"/>
+        </parameters>
+        <variables>
+            <hivevar key="date_value" value="@parameter_date"/>
+            <hivevar key="db_name" value="seo_cubes"/>
+        </variables>
+    </job>    
+
+    <job name="get new subscribers" type="executeHiveQuery" 
+         command="hql/get_new_subscribers.hql"
+            query_type="file"
+            region="na"  onerror="retry" retry="10" retryperiod="300">
+        <parameters>
+            <keyvalue key="date" value="${date}"/>
+        </parameters>
+        <variables>
+            <hivevar key="date_value" value="@parameter_date"/>
+            <hivevar key="db_name" value="seo_cubes"/>
+        </variables>
+        <dependencies>
+            <dependent name="get first page view sessions"/>
+        </dependencies>
+    </job>
+
+
+    <job name="get new subscribers and subscriptions" type="executeHiveQuery" 
+         command="hql/get_subscribers_and_subscriptions.hql"
+            query_type="file"
+            region="na" onerror="retry" retry="10" retryperiod="300">
+        <parameters>
+            <keyvalue key="date" value="${date}"/>
+        </parameters>
+        <variables>
+            <hivevar key="date_value" value="@parameter_date"/>
+            <hivevar key="db_name" value="seo_cubes"/>
+        </variables>
+        <dependencies>
+            <dependent name="get new subscribers"/>
+            <dependent name="get new subscriptions"/>
+            <dependent name="get first page view sessions"/>
+        </dependencies>
+    </job>
+
+
+    <job name="get na cube" type="executeHiveQuery" 
+         command="hql/get_na_cube.hql"
+            query_type="file"
+            region="na"  onerror="retry" retry="10" retryperiod="300">
+        <parameters>
+            <keyvalue key="date" value="${date}"/>
+        </parameters>
+        <variables>
+            <hivevar key="date_value" value="@parameter_date"/>
+            <hivevar key="db_name" value="seo_cubes"/>
+        </variables>
+        <dependencies>
+            <dependent name="get new subscribers and subscriptions"/>
+            <dependent name="get page and traffic classification"/>
+            <dependent name="get orders data"/>
+            <dependent name="get marketing ref key attributes"/>
+            <dependent name="get first pv all data"/>
+        </dependencies>
+    </job>
+
+    <job name="get na experiments cube" type="executeHiveQuery" 
+         command="hql/get_na_experiment_cube.hql"
+            query_type="file"
+            region="na" onerror="retry" retry="10" retryperiod="300">
+        <parameters>
+            <keyvalue key="date" value="${date}"/>
+        </parameters>
+        <variables>
+            <hivevar key="date_value" value="@parameter_date"/>
+            <hivevar key="db_name" value="seo_cubes"/>
+        </variables>
+        <dependencies>
+            <dependent name="get new subscribers and subscriptions"/>
+            <dependent name="get page and traffic classification"/>
+            <dependent name="get orders data"/>
+            <dependent name="get marketing ref key attributes"/>
+            <dependent name="get first pv all data"/>
+            <dependent name="get experiments data"/>
+        </dependencies>
+    </job>
+
+
+</Knowledge_base>

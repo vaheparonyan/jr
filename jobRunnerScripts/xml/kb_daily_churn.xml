@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Knowledge_base>
+
+    <job name="load_daily_churn" type="executeHiveQuery"
+         command="hql/get_daily_churn.hql"
+            query_type="file"
+            region="na">
+        <parameters>
+            <keyvalue key="date" value="${date}"/>
+            <keyvalue key="dtkey" value="${datekey}"/>
+        </parameters>
+        <variables>
+            <hivevar key="date_value" value="@parameter_date"/>
+            <hivevar key="date_key" value="@parameter_dtkey"/>
+            <hivevar key="db_name" value="seo_kbase"/>
+        </variables>
+    </job>
+
+</Knowledge_base>
+

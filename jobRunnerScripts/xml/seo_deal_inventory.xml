@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Knowledge_base>
+
+    <job name="prepare_seo_deal_inventory" type="executeBash" 
+         command="./shell/prepare_seo_deal_inventory.sh"
+         region="na">
+        <parameters>
+            <keyvalue key="host" value="seo-content-optimizer.snc1"/>
+        </parameters> 
+    </job>
+    
+    <job name="dump_seo_deal_inventory" type="executeBash" 
+         command="ssh @parameter_host &#34;psql -d seogeo -U postgres -c \&#34;COPY vpa_seo_deal_inventory to '/tmp/vpa_deal_inventory.tsv' (DELIMITER '|') \&#34;&#34;" 
+         region="na" >
+        <parameters>
+            <keyvalue key="host" value="seo-content-optimizer.snc1"/>
+        </parameters>
+        <dependencies>
+            <dependent name='prepare_seo_deal_inventory'/>
+        </dependencies>  
+    </job>
+    
+    <job name="copy_seo_deal_inventory" type="executeBash" 
+         command="scp @parameter_host:/tmp/vpa_deal_inventory.tsv ./csv/vpa_deal_inventory_@parameter_date.tsv"
+         region="na" >
+        <parameters>
+            <keyvalue key="host" value="seo-content-optimizer.snc1"/>
+            <keyvalue key="date" value="${datekey}"/>
+        </parameters>
+        <dependencies>
+            <dependent name='dump_seo_deal_inventory'/>
+        </dependencies>  
+    </job>
+    
+    <job name="dropTable log" type="dropTable" command="temp_SDI_@parameter_date_log" 
+         region="na" connectionType="teradata" onerror="ignore">
+        <parameters>
+            <keyvalue key="date" value="${datekey}"/>
+            <keyvalue key="TargetDBName" value="sandbox"/>
+        </parameters>
+    </job>
+    
+    <job name="dropTable UV" type="dropTable" command="temp_SDI_@parameter_date_UV" 
+         region="na" connectionType="teradata" onerror="ignore">
+        <parameters>
+            <keyvalue key="date" value="${datekey}"/>
+            <keyvalue key="TargetDBName" value="sandbox"/>
+        </parameters>
+    </job>
+    
+    <job name="dropTable ET" type="dropTable" command="temp_SDI_@parameter_date_ET" 
+         region="na" connectionType="teradata" onerror="ignore">
+        <parameters>
+            <keyvalue key="date" value="${datekey}"/>
+            <keyvalue key="TargetDBName" value="sandbox"/>
+        </parameters>
+    </job>
+
+    <job name="dropTable temp" type="dropTable" command="temp_SDI_@parameter_date" 
+         region="na" connectionType="teradata" onerror="ignore">
+        <parameters>
+            <keyvalue key="date" value="${datekey}"/>
+            <keyvalue key="TargetDBName" value="sandbox"/>
+        </parameters>
+    </job>
+
+    <job name="createTempTable" type="createTable" command="temp_SDI_@parameter_date" 
+                            region="na" connectionType="teradata">
+        <parameters>
+            <keyvalue key="date" value="${datekey}"/>
+            <keyvalue key="TargetDBName" value="sandbox"/>
+        </parameters>
+        <columns>
+            <column name="a01" description="page_id" type="INTEGER"/>
+            <column name="a02" description="url" type="VARCHAR(2048)"/>
+            <column name="a03" description="deal_count" type="INTEGER"/>
+            <column name="a04" description="merchant_count" type="INTEGER"/>
+            <column name="a05" description="merchant_with_desc" type="INTEGER"/>
+        </columns>
+        <dependencies>
+            <dependent name='dropTable log'/>
+            <dependent name='dropTable UV'/>
+            <dependent name='dropTable ET'/>
+            <dependent name='dropTable temp'/>
+        </dependencies>
+    </job>
+                                            
+     <job name="twbrmcp" type="executeBash" command="twbrmcp @parameter_user" 
+                            region="int" onerror="ignore">
+        <parameters>
+            <keyvalue key="user" value="vparonyan"/>
+        </parameters>
+    </job>
+    
+    <job name="tdload" type="executeBash" 
+         command="tdload -h @parameter_tdwc -u vparonyan -p LetsDoTDWC12 
+                  -f ./csv/vpa_deal_inventory_@parameter_date.tsv -d &#34;|&#34; 
+                  -t temp_SDI_@parameter_date --TargetWorkingDatabase sandbox" 
+         region="na">
+        <parameters>
+            <keyvalue key="tdwc" value="10.20.88.35"/>
+            <keyvalue key="date" value="${datekey}"/>
+        </parameters>
+        <dependencies>
+            <!--dependent name='twbrmcp'/-->
+            <dependent name='createTempTable'/>
+            <dependent name='copy_seo_deal_inventory'/>
+        </dependencies>
+    </job>
+
+    <job name="deal_inventory_move_from_temporary" type="executeSimpleQuery" command="deal_inventory_move_from_temporary" 
+                            region="na" connectionType="teradata">
+        <parameters>
+            <keyvalue key="date" value="${datekey}"/>
+            <keyvalue key="TargetTableName" value="sandbox.kb_seo_deal_inventory"/>
+            <keyvalue key="SourceTableName" value="sandbox.temp_SDI_@parameter_date"/>
+        </parameters>
+        <dependencies>
+            <dependent name='tdload'/>
+        </dependencies>
+    </job>
+    
+    <job name="grant_select_on_table" type="executeSimpleQuery" command="grant_select_on_table" 
+                            region="na" connectionType="teradata">
+        <parameters>
+            <keyvalue key="dbname" value="sandbox"/>
+            <keyvalue key="tablename" value="seo_deal_inventory"/>
+        </parameters>
+        <dependencies>
+            <dependent name='deal_inventory_move_from_temporary'/>
+        </dependencies>
+    </job>
+    
+    <job name="recreate monthly view" type="executeSimpleQuery" 
+         command="replace view sandbox.kb_seo_deal_inventory_monthly as
+                    select 
+                      datekey/100 as month_key, url as url, 
+                      avg(deal_count) as avg_daily_deal_count, 
+                      avg(merchant_count) as avg_daily_merchant_count,
+                      avg(merchant_with_desc) as avg_daily_merch_w_desc_count
+                    from sandbox.kb_seo_deal_inventory
+                    group by month_key, url" 
+                            region="na" connectionType="teradata">
+        <parameters>
+        </parameters>
+        <dependencies>
+        </dependencies>
+    </job>
+    
+</Knowledge_base>
+
+

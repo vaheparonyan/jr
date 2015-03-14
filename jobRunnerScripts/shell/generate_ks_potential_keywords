@@ -1,0 +1,40 @@
+#!/bin/bash
+ echo 1
+usage() {
+    cat <<EOF
+Usage: generate_potential_kewywords host user password 
+
+EOF
+}
+ echo 2
+
+
+DB_HOST=$1
+DB_USER=$2
+DB_PASSWORD=$3
+LOCALE=$4
+if [ $# -gt 4 ] ; then
+    usage >&2 && exit 1
+fi
+
+ echo 3
+cat <<EOF
+
+.LOGON ${DB_HOST}/${DB_USER}, ${DB_PASSWORD};
+.SET WIDTH 2048
+.SET MAXERROR 1
+
+DELETE FROM sandbox.kb_ks_keywords where locale = '$LOCALE';
+
+INSERT INTO sandbox.kb_ks_keywords
+select 
+ T.locale, 
+ T.friendly_name_title || ',' || C.city as keyword,
+ T.friendly_name_title as friendly_name_title, 
+ '<keyword> <city>' as query_pattern 
+from sandbox.kb_taxonomies T 
+full outer join sandbox.kb_ks_locale_city C on C.locale = T.locale
+where T.locale ='$LOCALE';
+
+.QUIT 
+EOF

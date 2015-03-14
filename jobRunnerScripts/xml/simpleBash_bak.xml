@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Knowledge_base>
+    
+    <job name="gr per url" tYpe="executeSimpleQuery" comMand="INSERT INTO sandbox.vahe_gross_revenue_url_tmp1
+SELECT f.event_day_key,
+  event_date,
+  event_time,
+  session_id,
+  user_scid,
+  cookie_b,
+  source_page_key,
+  param_utm_medium_key,
+  param_utm_source_key,
+  param_utm_campaign_key,
+  referrer_url,
+  referring_domain_key,
+  page_type_key,
+  page_channel_key,
+  page_division_key,
+  page_country_key,
+  page_view_id,
+  parent_page_view_id,
+  os_key,
+  http_referring_query_term,
+  page_url
+FROM dwh_mart_view.fact_clickstream f
+WHERE event_date = @parameter_date
+AND event_type_key = 2
+AND session_id NOT IN ( SELECT session_id FROM sandbox.as_int_bld_session_counts_fcs WHERE session_page_count >= 1000 )
+GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21
+QUALIFY ROW_NUMBER() OVER (PARTITION BY session_id || f.event_day_key ORDER BY event_time ASC, referrer_url DESC, parent_page_view_id DESC) = 1 ;" 
+         reGion="int" conNectionType="teradata">
+        <parameters>
+            <keyvalue key="date" value="${date}"/>
+        </parameters>
+        <dependencies>
+        </dependencies>
+    </job>
+       
+</Knowledge_base>

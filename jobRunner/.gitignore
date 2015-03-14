@@ -1,0 +1,18 @@
+*.class
+*.log
+.DS_Store
+build/
+dist/
+log/
+log4j/
+.idea
+node_modules
+
+# Package Files #
+/*.jar
+*.war
+*.ear
+*.mf
+nbbuild.xml
+nbproject/
+jobRunnerScripts

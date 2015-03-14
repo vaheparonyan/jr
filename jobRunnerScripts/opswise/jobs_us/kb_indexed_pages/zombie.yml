@@ -1,0 +1,22 @@
+context:
+  host: seo-content-optimizer.snc1
+  db_name: seo_kbase
+
+prepare_kb_indexed_pages:
+  class: ScriptTask
+  configuration:
+    script: ${base_dir}/shell/prepare_kb_indexed_pages.sh ${host}
+
+load_indexed_pages:
+  class: HiveTask
+  dependencies:
+    - prepare_kb_indexed_pages
+  configuration:
+    hql_file: ${base_dir}/hql/get_indexed_pages.hql
+
+load_daily_churn:
+  class: HiveTask
+  dependencies:
+    - load_indexed_pages
+  configuration:
+    hql_file: ${base_dir}/hql/get_daily_churn.hql

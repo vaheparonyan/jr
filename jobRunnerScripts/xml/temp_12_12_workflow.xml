@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Knowledge_base>
+
+    
+    
+    <job name="copy_subset_to_mysql as_bld_session_metrics_fcs" type="executeBash"
+         command="~/groupon-seo-admin/script/copy_subset_to_mysql as_bld_session_metrics_fcs event_day_key @parameter_dtkey @parameter_end_dt bld_session_metrics_fcs" 
+            region="na">
+        <parameters>
+            <keyvalue key="end_dt" value="${datekey}"/>
+            <keyvalue key="dtkey" value="${datekey}"/>
+        </parameters>
+    </job>
+    
+    <job name="copy_subset_to_mysql fact_article_page_metrics" type="executeBash"
+         command="~/groupon-seo-admin/script/copy_subset_to_mysql fact_article_page_metrics log_date_key @parameter_dtkey @parameter_end_dt" 
+            region="na">
+        <parameters>
+            <keyvalue key="end_dt" value="${datekey}"/>
+            <keyvalue key="dtkey" value="${datekey}"/>
+        </parameters>
+        <dependencies>
+            <dependent name='copy_subset_to_mysql as_bld_session_metrics_fcs'/>
+        </dependencies>
+    </job>
+    
+    <job name="copy_to_mysql as_deals_launched_count" type="executeBash"
+         command="~/groupon-seo-admin/script/copy_to_mysql as_deals_launched_count deals_launched_count" 
+            region="na">
+        <parameters>
+        </parameters>
+        <dependencies>
+            <dependent name='copy_subset_to_mysql fact_article_page_metrics'/>
+        </dependencies>
+    </job>
+    
+    <job name="copy_subset_to_mysql as_bld_local_metrics_fcs" type="executeBash"
+         command="~/groupon-seo-admin/script/copy_subset_to_mysql as_bld_local_metrics_fcs event_day_key @parameter_dtkey @parameter_end_dt bld_local_metrics_fcs" 
+            region="na">
+        <parameters>
+            <keyvalue key="end_dt" value="${datekey}"/>
+            <keyvalue key="dtkey" value="${datekey}"/>
+        </parameters>
+        <dependencies>
+            <dependent name='copy_to_mysql as_deals_launched_count'/>
+        </dependencies>
+    </job>
+
+    <job name="copy_subset_to_mysql as_bld_local_metrics_fcs" type="executeBash"
+         command="~/groupon-seo-admin/script/copy_subset_to_mysql as_bld_biz_metrics_fcs event_day_key @parameter_dtkey @parameter_end_dt bld_biz_metrics_fcs" 
+            region="na">
+        <parameters>
+            <keyvalue key="end_dt" value="${datekey}"/>
+            <keyvalue key="dtkey" value="${datekey}"/>
+        </parameters>
+        <dependencies>
+            <dependent name='copy_subset_to_mysql as_bld_local_metrics_fcs'/>
+        </dependencies>
+    </job>
+    
+    <job name="copy_subset_to_mysql as_bld_session_exp_metrics_fcs" type="executeBash"
+         command="~/groupon-seo-admin/script/copy_subset_to_mysql as_bld_session_exp_metrics_fcs event_day_key @parameter_dtkey @parameter_end_dt bld_session_exp_metrics_fcs" 
+            region="na">
+        <parameters>
+            <keyvalue key="end_dt" value="${datekey}"/>
+            <keyvalue key="dtkey" value="${datekey}"/>
+        </parameters>
+        <dependencies>
+            <dependent name='copy_subset_to_mysql as_bld_local_metrics_fcs'/>
+        </dependencies>
+    </job>
+    
+    <job name="copy_subset_to_mysql as_bot_view_test_metrics" type="executeBash"
+         command="~/groupon-seo-admin/script/copy_subset_to_mysql as_bot_view_test_metrics event_day_key ${bh_date_from} ${date_to} @parameter_dtkey @parameter_end_dt bot_view_test_metrics" 
+            region="na">
+        <parameters>
+            <keyvalue key="end_dt" value="${datekey}"/>
+            <keyvalue key="dtkey" value="${datekey}"/>
+        </parameters>
+        <dependencies>
+            <dependent name='copy_subset_to_mysql as_bld_session_exp_metrics_fcs'/>
+        </dependencies>
+    </job>
+
+    <job name="create seo na operational cube" type="executeSimpleQuery" 
+            command="seo_na_operational_cube" 
+            region="na" connectionType="mysql">
+        <parameters>
+            <keyvalue key="dtkey" value="${datekey}"/>
+            <keyvalue key="date" value="${date}"/>
+            <keyvalue key="TargetDBURL" value="marketing-analytics-db-master-vip.snc1"/>
+            <keyvalue key="TargetDBUser" value="seo_juicer"/>
+            <keyvalue key="TargetDBPassword" value="seo_juicer"/>
+            <keyvalue key="TargetDBName" value="seo_analytics"/>
+        </parameters>
+        <dependencies>
+            <dependent name='copy_subset_to_mysql as_bot_view_test_metrics'/>
+        </dependencies>
+    </job>
+
+
+
+</Knowledge_base>

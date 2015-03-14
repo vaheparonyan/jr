@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Knowledge_base>
+    <job name="create seo na operational cub" type="executeSimpleQuery" 
+            command="seo_na_operational_cube" 
+            region="na" connectionType="mysql">
+        <parameters>
+            <keyvalue key="TargetDBURL" value="marketing-analytics-db-master-vip.snc1"/>
+            <keyvalue key="TargetDBUser" value="seo_juicer"/>
+            <keyvalue key="TargetDBPassword" value="seo_juicer"/>
+            <keyvalue key="TargetDBName" value="seo_analytics"/>
+        </parameters>
+    </job>
+
+
+
+</Knowledge_base>

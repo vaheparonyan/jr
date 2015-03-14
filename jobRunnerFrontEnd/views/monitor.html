@@ -1,0 +1,381 @@
+<!--suppress HtmlUnknownTarget -->
+<html>
+
+<head>
+    <link title="no title" media="screen" type="text/css" href="/css/monitor_wbr.css" rel="stylesheet">
+    <title>Knowledge Base Job Monitor</title>
+</head>
+
+<body>
+
+<script type="text/javascript" src="../thirdParty/js/jquery-1.10.2.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        //load_data();
+    });
+</script>
+
+<script>
+    var _rowStyle;
+    var _mainRowStyle;
+
+    var load_data = function(){
+        $.ajax({
+            url: "load_data",
+            type: "GET",
+            contentType: "application/json",
+            dataType: "json",
+            success: function(data) {
+                load_data_rows(data);
+            },
+            error: function(jqXHR, textStatus, errorThrown) { alert(errorThrown); },
+            complete: function (data, textStatus, jqXHR) {
+
+            }
+        });
+    };
+
+    var load_data_rows = function(data) {
+
+        var table_ref = document.getElementById('monitor_main_table_body');
+
+        for (var d in  data) {
+            for (var i = 0; i < data[d].length; i++) {
+                add_row_to_tbody(table_ref, data[d][i], data[d][0].parent, (i == 0));
+            }
+        }
+    };
+
+    var add_row_to_tbody = function(table_ref, row_json, parent, is_main) {
+
+        var new_id = row_json.id.replace(" ", "_");
+        var row = document.getElementById(new_id);
+        if (row) {
+            row.className = row.className.replace(row.cells[2].firstChild.nodeValue, row_json.status);
+
+            row.cells[2].firstChild.nodeValue = row_json.status;
+            row.cells[11].firstChild.nodeValue = row_json.end_time;
+            row.cells[13].firstChild.nodeValue = row_json.error_msg;
+
+            return;
+        }
+
+        // Insert a row in the table at the last row position
+        var new_row = table_ref.insertRow(table_ref.rows.length);
+        new_row.id = new_id;
+
+        var n = new_row.insertCell(0);
+
+        var input = document.createElement("input");
+        input.type = "checkbox";
+        input.id = "ck_" + new_row.id;
+        input.name = "ck_" + new_row.id;
+        input.value = "unchecked";
+        input.onclick =  function () { do_check(this); };
+        if (!is_main) {
+            input.className = "invisible";
+        }
+        n.appendChild(input);
+
+        if (is_main) {
+            var img = document.createElement("img");
+            img.align = "absmiddle";
+            img.src = "thirdParty/imgs/closed_folder.png";
+            img.title = "Check the group";
+            img.onclick = function () {  do_expand(this); };
+
+            n.appendChild(img);
+        }
+
+
+        n = new_row.insertCell(1);
+        n.appendChild(document.createTextNode(parent.replace(" ", "_")));
+        n.className = "invisible";
+
+        n = new_row.insertCell(2);
+        n.appendChild(document.createTextNode(row_json.status));
+
+        n  = new_row.insertCell(3);
+        n.appendChild(document.createTextNode(row_json.env));
+
+        n = new_row.insertCell(4);
+        n.appendChild(document.createTextNode(row_json.region));
+
+        n = new_row.insertCell(5);
+        n.appendChild(document.createTextNode(row_json.start_date));
+
+        n = new_row.insertCell(6);
+        n.appendChild(document.createTextNode(row_json.end_date));
+
+        n = new_row.insertCell(7);
+        n.appendChild(document.createTextNode(row_json.file_name));
+
+        n = new_row.insertCell(8);
+        n.appendChild(document.createTextNode(row_json.machine_name));
+
+        n = new_row.insertCell(9);
+        n.appendChild(document.createTextNode(row_json.user_name));
+
+        n = new_row.insertCell(10);
+        n.appendChild(document.createTextNode(row_json.start_time));
+
+        n = new_row.insertCell(11);
+        n.appendChild(document.createTextNode(row_json.end_time));
+
+        n = new_row.insertCell(12);
+        n.appendChild(document.createTextNode(row_json.job_name));
+
+        n = new_row.insertCell(13);
+        n.appendChild(document.createTextNode(row_json.error_msg));
+
+        if (is_main == true) {
+            new_row.className = getMainRowStyle(row_json);
+            new_row.style.display = '';
+        } else {
+            new_row.className = getRowStyle(row_json);
+
+            if (!is_expanded(document.getElementById(parent.replace(" ", "_")))) {
+                new_row.style.display = 'none';
+            } else {
+                new_row.style.display = '';
+            }
+        }
+
+
+    };
+
+    function getRowStyle(curr_row) {
+
+        if (_rowStyle == "odd_light") {
+            _rowStyle = "ev_light";
+        } else {
+            _rowStyle = "odd_light";
+        }
+
+        return _rowStyle + "_" + curr_row.status;
+    }
+
+    function getMainRowStyle(curr_row) {
+
+        if (_mainRowStyle == "odd_light") {
+            _mainRowStyle = "ev_light";
+        } else {
+            _mainRowStyle = "odd_light";
+        }
+
+        return _mainRowStyle + "_" + curr_row.status;
+    }
+
+    function is_expanded(ctrl) {
+        return !(ctrl.cells[0].children[1].attributes.src.value == "thirdParty/imgs/closed_folder.png");
+    }
+
+    function do_expand(ctrl) {
+
+        if(ctrl.attributes.src.value == "thirdParty/imgs/open_folder.png") {
+            ctrl.attributes.src.value = "thirdParty/imgs/closed_folder.png";
+        } else {
+            ctrl.attributes.src.value = "thirdParty/imgs/open_folder.png";
+        }
+
+        set_expanded(ctrl.parentNode.parentNode, is_expanded(ctrl.parentNode.parentNode));
+    }
+
+    function set_expanded(rowToChange, expanded) {
+        var tbl = document.getElementById("monitor_main_table");
+        var parentId = rowToChange.id;
+
+        for (var i = rowToChange.rowIndex+1; i < tbl.rows.length; i++) {
+            if (tbl.rows[i].cells[1].innerHTML == parentId) {
+                if (!expanded) {
+                    tbl.rows[i].style.display = 'none';
+                } else {
+                    tbl.rows[i].style.display = '';
+                }
+
+            } else {
+                break;
+            }
+        }
+    }
+
+    function do_check(checkbox) {
+        var tbl = document.getElementById("monitor_main_table");
+        var parentId = checkbox.parentNode.parentNode.id;
+
+        var state = checkbox.checked;
+
+        for (var i = checkbox.parentNode.parentNode.rowIndex; i < tbl.rows.length; i++) {
+            if (tbl.rows[i].cells[1].innerHTML == parentId) {
+                document.getElementById("ck_" + tbl.rows[i].id).checked = state;
+
+                if (state) {
+                    tbl.rows[i].style.fontWeight = 'bold';
+                    tbl.rows[i].style.fontStyle = 'oblique';
+                    tbl.rows[i].style.color = '#808080';
+                } else {
+                    tbl.rows[i].style.fontWeight = '';
+                    tbl.rows[i].style.fontStyle = '';
+                    tbl.rows[i].style.color = '';
+                }
+            } else {
+                break;
+            }
+        }
+    }
+</script>
+
+<script src="socket.io/socket.io.js"></script>
+
+<script>
+
+    //todo: move this to a separate file
+    var QueryString = function () {
+        // This function is anonymous, is executed immediately and
+        // the return value is assigned to QueryString!
+        var query_string = {};
+        var query = window.location.search.substring(1);
+        var vars = query.split("&");
+        for (var i=0;i<vars.length;i++) {
+            var pair = vars[i].split("=");
+            // If first entry with this name
+            if (typeof query_string[pair[0]] === "undefined") {
+                query_string[pair[0]] = pair[1];
+                // If second entry with this name
+            } else if (typeof query_string[pair[0]] === "string") {
+                var arr = [ query_string[pair[0]], pair[1] ];
+                query_string[pair[0]] = arr;
+                // If third or later entry with this name
+            } else {
+                query_string[pair[0]].push(pair[1]);
+            }
+        }
+        return query_string;
+    } ();
+    var glGroupName1 = QueryString.job_group;
+    var glGroupName2 = QueryString.job_group;
+
+    // create a new web socket
+    //var socket = io.connect('localhost:8008', {query:'groupname='+ QueryString.job_group});
+    //var socket = io.connect('http://seo-util2.snc1:8008', {query:'groupname='+ QueryString.job_group});
+    var socket = io.connect('http://seo-job-runner-staging1.snc1', {query:'groupname='+ QueryString.job_group});
+
+
+    socket.on('update', function (data) {
+        load_data_rows(data);
+    });
+
+    socket.on('delete', function (data) {
+
+        var tbl = document.getElementById("monitor_main_table");
+        data.forEach(function( row ){
+            tbl.deleteRow(document.getElementById(row).rowIndex);
+        });
+    });
+
+</script>
+
+<script>
+    var STARTROW=2;
+    var selected_rows = [];
+
+    // populates the selected_rows variable and returns the where clause for delete query
+    function get_where_clause() {
+        var tbl = document.getElementById("monitor_main_table");
+        var whereClause = "";
+
+        var prefix = " where ";
+        // as adding new row in to the start, then lets increment all ids of existing rows
+        for (var i = STARTROW; i < tbl.rows.length; i++) {
+            if (tbl.rows[i].cells[0].children[0].checked) {
+
+                selected_rows.push(tbl.rows[i].id);
+
+                whereClause += prefix;
+                prefix = " OR ";
+
+                whereClause +=  "(machine_name = '" + tbl.rows[i].cells[8].innerHTML + "' " +
+                        "AND user_name = '" + tbl.rows[i].cells[9].innerHTML + "' " +
+                        "AND start_time = '" + tbl.rows[i].cells[10].innerHTML + "' " +
+                        "AND job_name = '" + tbl.rows[i].cells[12].innerHTML + "')";
+            }
+        }
+
+        return whereClause;
+    }
+
+    function delete_rows() {
+        $.post(
+            "/delete_data",
+            {whereClause: get_where_clause(),
+             selectedRows: selected_rows,
+             groupname: QueryString.job_group},
+            function(data, status){
+                if (status != "success") {
+                    alert("The delete operation failed on server.");
+                } else {
+                    var tbl = document.getElementById("monitor_main_table");
+                    for (var i = 0; i < selected_rows.length; i++) {
+                        if (document.getElementById(selected_rows[i])) {
+                            tbl.deleteRow(document.getElementById(selected_rows[i]).rowIndex);
+                        }
+                    }
+                    selected_rows = [];
+                }
+            });
+    }
+</script>
+
+<div id="container" style="width:100%; min-height: 600px; margin: 0; padding: 0; overflow: auto; position: relative">
+
+    <div id="wbr_grid_container" class="tablebox tablebox_light" style="width: 100%; min-height: 1000px; overflow: auto; position: relative; cursor: default;">
+        <table id="monitor_main_table" class="obj row20px" cellspacing="0" cellpadding="0" style="width: 100%;">
+            <tbody id="monitor_main_table_body">
+                <tr style="height: auto;">
+                    <th style="width: 3%;"></th>
+                    <th style="width: 3%;"></th>
+                    <th style="width: 4%;"></th>
+                    <th style="width: 5%;"></th>
+                    <th style="width: 5%;"></th>
+                    <th style="width: 10%;"></th>
+                    <th style="width: 10%;"></th>
+                    <th style="width: 10%;"></th>
+                    <th style="width: 10%;"></th>
+                    <th style="width: 5%;"></th>
+                    <th style="width: 10%;"></th>
+                    <th style="width: 9%;"></th>
+                    <th style="width: 5%;"></th>
+                    <th style="width: 9%;"></th>
+                    <th style="width: 2%;"></th>
+                </tr>
+                <tr style="height: auto;">
+                    <td class=head style="width: 3%;">
+                        <input id="delete_rows" type="button" class="del_btn" value="Delete" onclick="delete_rows()">
+                    </td>
+                    <td class="head invisible" style="width: 3%;">Parent</td>
+                    <td class="head" style="width: 4%;">Status</td>
+                    <td class="head" style="width: 5%;">Env</td>
+                    <td class="head" style="width: 5%;">Region</td>
+                    <td class="head" style="width: 10%;">Start Date</td>
+                    <td class="head" style="width: 10%;">End Date</td>
+                    <td class="head" style="width: 10%;">File Name</td>
+                    <td class="head" style="width: 10%;">Machine Name</td>
+                    <td class="head" style="width: 5%;">User Name</td>
+                    <td class="head" style="width: 10%;">Start Time</td>
+                    <td class="head" style="width: 9%;">End Time</td>
+                    <td class="head" style="width: 5%;">Job Name</td>
+                    <td class="head" style="width: 9%;">Error Msg</td>
+                    <td class="head invisible" style="width: 2%;">Id</td>
+                </tr>
+
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+</body>
+</html>
+
+

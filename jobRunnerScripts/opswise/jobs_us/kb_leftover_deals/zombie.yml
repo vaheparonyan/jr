@@ -1,0 +1,15 @@
+context:
+  host: seo-content-optimizer.snc1
+  db_name: seo_kbase
+
+prepare_leftover_deals:
+  class: ScriptTask
+  configuration:
+    script: ${base_dir}/shell/prepare_kb_leftover_deals.sh ${host}
+
+load_leftover_deals:
+  class: HiveTask
+  dependencies:
+    - prepare_leftover_deals
+  configuration:
+    hql_file: ${base_dir}/hql/get_leftover_deals.hql

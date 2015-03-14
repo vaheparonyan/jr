@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Knowledge_base>
+
+   <ResultSet name="int_bld_session_metrics_rp_fcs" region="int" >
+        <column type="integer" name="event_day_key"/>
+        <column type="integer" name="page_country_key"/>
+        <column type="integer" name="mktg_ref_key"/>
+        <column type="varchar" name="platform"/>
+        <column type="varchar" name="browser_type"/>
+        <column type="varchar" name="query_type"/>
+        <column type="varchar" name="page_channel"/>
+        <column type="varchar" name="page_type"/>
+        <column type="varchar" name="url_pattern"/>
+        <column type="varchar" name="getaway_subclass"/>
+        <column type="integer" name="visitors"/>
+        <column type="integer" name="sessions"/>
+        <column type="integer" name="bounce_sessions"/>
+        <column type="integer" name="order_sessions"/>
+        <column type="integer" name="page_views"/>
+        <column type="integer" name="page_views_on_orders"/>
+        <column type="integer" name="average_session_length"/>
+        <column type="integer" name="transactions"/>
+        <column type="double" name="bookings"/>
+        <column type="double" name="revenue"/>
+        <column type="integer" name="new_subscribers"/>
+        <column type="integer" name="new_subscription_requests"/>
+        <column type="integer" name="new_subscriptions"/>
+    </ResultSet>
+
+    <job name="truncate teradata table" type="executeSimpleQuery" 
+            command="delete from sandbox.int_bld_session_metrics_rp_fcs where event_day_key = @parameter_dtkey" 
+            region="int" connectionType="teradata">
+        <parameters>
+            <keyvalue key="dtkey" value="${datekey}"/>
+        </parameters>
+    </job>
+
+    <job name="create td request path cube" type="executeSimpleQuery" 
+            command="load_int_bld_session_rp" 
+            region="int" connectionType="teradata">
+        <parameters>
+            <keyvalue key="dtkey" value="${datekey}"/>
+            <keyvalue key="date" value="${date}"/>
+        </parameters>
+        <dependencies>
+            <dependent name="truncate teradata table"/>
+        </dependencies>
+    </job>
+
+    <job name="truncate my sql" type="executeSimpleQuery" 
+            command="delete from seo_analytics.@parameter_MYSQL_TABLENAME where event_day_key = @parameter_dtkey" 
+            region="int" connectionType="mysql">
+        <parameters>
+            <keyvalue key="dtkey" value="${datekey}"/>
+            <keyvalue key="MYSQL_TABLENAME" value="int_bld_session_metrics_rp_fcs"/>
+
+            <keyvalue key="TargetDBURL" value="marketing-analytics-db-master-vip.snc1"/>
+            <keyvalue key="TargetDBUser" value="seo_juicer"/>
+            <keyvalue key="TargetDBPassword" value="seo_juicer"/>
+        </parameters>
+    </job>
+
+
+    <job name="load mysql" type="executeQuery" 
+         command="select * from sandbox.@parameter_TD_TABLENAME where event_day_key = @parameter_dtkey"
+         region="int" connectionType="teradata">
+        <parameters type="queryParameter">
+            <keyvalue key="TD_TABLENAME" value="int_bld_session_metrics_rp_fcs"/>
+            <keyvalue key="dtkey" value="${datekey}"/>
+
+            <!--keyvalue key="TargetDBURL" value="localhost"/-->
+            <keyvalue key="TargetDBURL" value="marketing-analytics-db-master-vip.snc1" />
+            <keyvalue key="TargetDBUser" value="seo_juicer"/>
+            <keyvalue key="TargetDBPassword" value="seo_juicer"/>
+            <keyvalue key="TargetDBName" value="seo_analytics"/>
+        </parameters>
+
+        <resultSet connectionType="mysql" name="int_bld_session_metrics_rp_fcs">
+            <!--column  sourceColumn="name" targetColumn="name"</column-->
+        </resultSet>
+
+        <dependencies>
+            <dependent name="truncate my sql"/>
+            <dependent name="create td request path cube"/>
+        </dependencies>
+    </job>
+
+    <job name="create seo int request path cube" type="executeSimpleQuery" 
+            command="cube_int_bld_session_metrics_rp_fcs" 
+            region="int" connectionType="mysql">
+        <parameters>
+
+            <keyvalue key="dtkey" value="${datekey}"/>
+            <keyvalue key="date" value="${date}"/>
+            <keyvalue key="TargetDBURL" value="marketing-analytics-db-master-vip.snc1"/>
+            <keyvalue key="TargetDBUser" value="seo_juicer"/>
+            <keyvalue key="TargetDBPassword" value="seo_juicer"/>
+            <keyvalue key="TargetDBName" value="seo_analytics"/>
+        </parameters>
+        <dependencies>
+            <dependent name="load mysql"/>
+        </dependencies>
+    </job>
+
+
+
+</Knowledge_base>

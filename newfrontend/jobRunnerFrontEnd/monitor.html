@@ -1,0 +1,284 @@
+<!--suppress HtmlUnknownTarget -->
+<html>
+
+<head>
+    <link title="no title" media="screen" type="text/css" href="/css/monitor_wbr.css" rel="stylesheet">
+    <title>Knowledge Base Job Monitor</title>
+</head>
+
+<body>
+
+<div id="container" style="width:100%; min-height: 600px; margin: 0; padding: 0; overflow: auto; position: relative">
+    <div id="header" class=" wbr_textarea" style="width:600px; height:50px;">
+
+        <label for="number_of_rows"></label><input id="number_of_rows" type="number" style="float: right; position: static; width: 180px; height: 30px;" readonly="">
+
+    </div>
+
+    <div id="wbr_grid_container" class=" tablebox tablebox_light" style="width: 100%; min-height: 1000px; overflow: auto; position: relative; cursor: default;">
+
+
+    </div>
+
+</div>
+<!--suppress HtmlUnknownTarget -->
+<script src="socket.io/socket.io.js"></script>
+<!--suppress HtmlUnknownTarget -->
+<script type="text/javascript" src="js/jquery-1.10.2.min.js"></script>
+<script>
+
+    function doExpand(ctrl, doNotUpdate) {
+        if (!doNotUpdate) {
+            if(ctrl.attributes.src.value == "imgs/open_folder.png") {
+                ctrl.attributes.src.value = "imgs/closed_folder.png";
+            } else {
+                ctrl.attributes.src.value = "imgs/open_folder.png";
+            }
+        }
+        var isExpanded = ctrl.attributes.src.value == "imgs/closed_folder.png";
+        setRowSelectedOrExpanded(ctrl.parentNode.parentNode, isExpanded);
+    }
+
+    function setRowSelectedOrExpanded(rowToChange, expanded) {
+        var tbl = document.getElementById("monitor_main_table");
+        var parentId = rowToChange.cells[14].innerHTML;
+
+        var expandedStyle = "";
+        if (expanded) {
+            expandedStyle = "display: none";
+        }
+        if (rowToChange.cells[0].children[0].checked) {
+            rowToChange.setAttribute('style', "font-style: oblique; color: #808080; font-weight: bold;");
+        } else {
+            rowToChange.setAttribute('style', "");
+        }
+        for (var i = rowToChange.rowIndex+1; i < tbl.rows.length; i++) {
+            if (tbl.rows[i].cells[1].innerHTML == parentId) {
+                if (rowToChange.cells[0].children[0].checked) {
+                    tbl.rows[i].setAttribute('style', "font-style: oblique; color: #808080; font-weight: bold;" + expandedStyle);
+                } else {
+                    tbl.rows[i].setAttribute('style', expandedStyle);
+                }
+            } else {
+                break;
+            }
+            tbl.rows[i].cells[0].children[0].checked = rowToChange.cells[0].children[0].checked;
+        }
+    }
+
+    function doCheck(checkbox) {
+        //alert(checkbox.checked + " : " + checkbox.id + " : " + checkbox.parentNode.cellIndex + " : " + checkbox.parentNode.parentNode.rowIndex);
+
+        var isExpanded = (checkbox.parentNode.parentNode.cells[0].children[1].attributes.src.value == "imgs/closed_folder.png");
+        setRowSelectedOrExpanded(checkbox.parentNode.parentNode, isExpanded);
+    }
+</script>
+<script>
+    // create a new web socket
+    //var socket = io.connect('10.8.124.101:8008');
+    //var socket = io.connect('localhost:8008');
+    //var socket = io.connect('https://seo-dub1/knowledgebase');
+    var socket = io.connect('http://seo-util2.snc1:8008');
+
+    socket.onopen = function () {
+        alert("socket.onopen :");
+    };
+
+    socket.onmessage = function (msg) {
+
+        alert("socket.onmessage :" + msg);
+    };
+
+    socket.onerror = function (error) {
+
+        alert('WebSocket Error ' + error);
+    };
+
+    socket.on('bulk', function (data) {
+        // do nothing
+    });
+
+    socket.on('load', function (data) {
+
+        if (data.length != 0) {
+            $( "#wbr_grid_container" ).html(data);
+        }
+    });
+
+    socket.on('update', function (data) {
+        var tbl = document.getElementById("monitor_main_table");
+        var lastMainRow = document.getElementById(tbl.rows[tbl.rows.length-1].cells[1].innerHTML.replace(" ", "_"));
+        mainRowStyle = "ev_light";
+        if (lastMainRow.className.indexOf("odd_light") != -1) {
+            mainRowStyle = "odd_light";
+        }
+
+        data.forEach(function( rows ){
+            rows.forEach(function(row) {
+                var r = document.getElementById(row.id.replace(" ", "_"));
+                if (r) {
+                    r.className = r.className.replace(r.cells[2].innerHTML, row.status);
+                    r.cells[2].innerHTML = row.status; // status
+                    r.cells[11].innerHTML = row.end_time; // end_time
+                    r.cells[13].innerHTML = row.error_msg; // error_msg
+                } else {
+                    createRow(row);
+                }
+            });
+        });
+    });
+
+    socket.on('delete', function (data) {
+        var tbl = document.getElementById("monitor_main_table");
+        data.forEach(function( rows ){
+            rows.forEach(function(row) {
+                var id = row.id.replace(" ", "_");
+                var r = document.getElementById(id);
+                if (r) {
+                    tbl.deleteRow(r.rowIndex);
+                }
+            });
+        });
+    });
+
+</script>
+<script>
+    var STARTROW=2;
+    var selected_rows = [];
+
+    function set_number_of_rows() {
+        document.getElementById("number_of_rows").value = "Number of Rows: " + 10;
+    }
+
+    function delete_rows() {
+        $.post(
+                "/delete_data",
+                {whereClause: get_where_clause()},
+                function(data, status){
+                    if (status != "success") {
+                        alert("The delete operation failed on server.");
+                    } else {
+                        var tbl = document.getElementById("monitor_main_table");
+                        for (var i = selected_rows.length-1; i >= 0; i--) {
+                            tbl.deleteRow(selected_rows[i][0]);
+                        }
+                        set_number_of_rows();
+                        selected_rows = [];
+                    }
+                });
+    }
+
+    // populates the selected_rows variable and returns the where clause for delete query
+    function get_where_clause() {
+        var tbl = document.getElementById("monitor_main_table");
+        var whereClause = "";
+
+        // as adding new row in to the start, then lets increment all ids of existing rows
+        for (var i = STARTROW; i < tbl.rows.length; i++) {
+            if (tbl.rows[i].cells[0].children[0].checked) {
+
+                selected_rows.push([tbl.rows[i].rowIndex,
+                    tbl.rows[i].cells[8].innerHTML, // machine name
+                    tbl.rows[i].cells[9].innerHTML, // user name
+                    tbl.rows[i].cells[10].innerHTML, // start time
+                    tbl.rows[i].cells[12].innerHTML]); // job time
+                // these 4 columns are all we need to find the row in db to delete.
+
+                if (whereClause != "") {
+                    whereClause += " OR ";
+                } else {
+                    whereClause = " where ";
+                }
+
+                whereClause +=  "(machine_name = '" + tbl.rows[i].cells[8].innerHTML + "' " +
+                        "AND user_name = '" + tbl.rows[i].cells[9].innerHTML + "' " +
+                        "AND start_time = '" + tbl.rows[i].cells[10].innerHTML + "' " +
+                        "AND job_name = '" + tbl.rows[i].cells[12].innerHTML + "')";
+            }
+        }
+
+        return whereClause;
+    }
+
+</script>
+<script>
+    var rowStyle;
+    var mainRowStyle;
+
+    function getRowStyle(curr_row) {
+
+        if (rowStyle == "odd_light") {
+            rowStyle = "ev_light";
+        } else {
+            rowStyle = "odd_light";
+        }
+
+        return rowStyle + "_" + curr_row.status;
+    }
+
+    function getMainRowStyle(curr_row) {
+
+        if (mainRowStyle == "odd_light") {
+            mainRowStyle = "ev_light";
+        } else {
+            mainRowStyle = "odd_light";
+        }
+
+        return mainRowStyle + "_" + curr_row.status;
+    }
+
+
+    function createRow(curr_row) {
+
+        var tbl  = document.getElementById("monitor_main_table");
+
+        var row = tbl.insertRow(-1);
+
+        var tblRow  = "";
+        var checkbox_id = "ck_" + curr_row.id.replace(" ", "_");
+
+        var checked_or_not = "unchecked";
+
+        row.id = curr_row.id.replace(" ", "_");
+        var expandControls = "";
+        if (curr_row.parent == curr_row.id) {
+
+            row.className = getMainRowStyle(curr_row);
+
+            expandControls = "<input id=" + checkbox_id + " type=\"checkbox\" name=checkbox_id onclick=\"doCheck(this)\"" + checked_or_not +">" +
+                    "<img align=\"absmiddle\" src=\"imgs/closed_folder.png\" title=\"Check the group\" onclick=\"doExpand(this, false)\">" + "</td>";
+        } else {
+
+            row.className = getRowStyle(curr_row);
+
+            row.style = "display: none";
+            expandControls = "<input class=invisible id=" + checkbox_id + " type=\"checkbox\" name=checkbox_id onclick=\"doCheck(this)\"" + checked_or_not +">" +
+                    "<img class=invisible src=\"imgs/closed_folder.png\" title=\"Expand\" onclick=\"doExpand(this, false)\">" + "</td>";
+        }
+
+        tblRow +=
+                "<td style=\"text-align:center;\">" + expandControls +
+                        "<td class=invisible title=\"" + curr_row.parent + "\" style=\"width: 3%\">" + curr_row.parent + "</td>" +
+                        "<td title=\"" + curr_row.status + "\" style=\"width: 4%\">" + curr_row.status + "</td>" +
+                        "<td title=\"" + curr_row.env + "\"; style=\"width: 5%\">" + curr_row.env + "</td>" +
+                        "<td title=\"" + curr_row.region + "\" style=\"width: 5%\">" + curr_row.region + "</td>" +
+                        "<td title=\"" + curr_row.start_date + "\" style=\"width: 10%\">" + curr_row.start_date + "</td>" +
+                        "<td title=\"" + curr_row.end_date + "\" style=\"width: 10%\">" + curr_row.end_date + "</td>" +
+                        "<td title=\"" + curr_row.file_name + "\" style=\"width: 10%\">" + curr_row.file_name + "</td>" +
+                        "<td title=\"" + curr_row.machine_name + "\" style=\"width: 10%\">" + curr_row.machine_name + "</td>" +
+                        "<td title=\"" + curr_row.user_name + "\" style=\"width: 5%\">" + curr_row.user_name + "</td>" +
+                        "<td title=\"" + curr_row.start_time + "\" style=\"width: 10%\">" + curr_row.start_time + "</td>" +
+                        "<td title=\"" + curr_row.end_time + "\" style=\"width: 9%\">" + curr_row.end_time + "</td>" +
+                        "<td title=\"" + curr_row.job_name + "\" style=\"width: 5%\">" + curr_row.job_name + "</td>" +
+                        "<td title=\"" + curr_row.error_msg + "\" style=\"width: 9%\">" + curr_row.error_msg + "</td>" +
+                        "<td class=invisible title=\"" + curr_row.id + "\" style=\"width: 2%\">" + curr_row.id + "</td>";
+
+        row.innerHTML = tblRow;
+    }
+</script>
+
+</body>
+</html>
+
+
+

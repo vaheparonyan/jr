@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Knowledge_base>
+    
+
+    <job name="get hive session counts" type="executeBash" 
+         command="echo get hive session counts &#62;&#62; /tmp/test1.log"
+            region="na"> 
+                <parameters>
+            <keyvalue key="date" value="${datekey}"/>
+        </parameters>
+    </job>
+
+    <job name="get first page view sessions" type="executeBash" 
+         command="echo get first page view sessions &#62;&#62; /tmp/test1.log"
+            region="na"> 
+                    <parameters>
+            <keyvalue key="date" value="${datekey}"/>
+        </parameters>
+        <dependencies>
+            <dependent name="get hive session counts"/>
+        </dependencies>
+    </job>
+    
+    <job name="get experiments data" type="executeBash" 
+         command="echo get experiments data &#62;&#62; /tmp/test1.log"
+            region="na"> 
+                    <parameters>
+            <keyvalue key="date" value="${datekey}"/>
+        </parameters>
+      
+    </job>
+
+    <job name="get expired deal pages" type="executeBash" 
+         command="echo get expired deal pages &#62;&#62; /tmp/test1.log"
+            region="na"> 
+                    <parameters>
+            <keyvalue key="date" value="${datekey}"/>
+        </parameters>
+    </job>
+
+    <job name="get orders tmp" type="executeBash" 
+         command="echo get orders tmp &#62;&#62; /tmp/test1.log"
+            region="na"> 
+                    <parameters>
+            <keyvalue key="date" value="${datekey}"/>
+        </parameters>
+    </job>    
+
+
+    <job name="get marketing ref key data" type="executeBash" 
+         command="echo get marketing ref key data &#62;&#62; /tmp/test1.log"
+            region="na"> 
+                <parameters>
+            <keyvalue key="date" value="${datekey}"/>
+        </parameters>
+        <dependencies>
+            <dependent name="get first page view sessions"/>
+        </dependencies>
+    </job>
+
+    <job name="get marketing ref key attributes" type="executeBash" 
+         command="echo get marketing ref key attributes &#62;&#62; /tmp/test1.log"
+            region="na"> 
+                <parameters>
+            <keyvalue key="date" value="${datekey}"/>
+        </parameters>
+        <dependencies>
+            <dependent name="get first page view sessions"/>
+            <dependent name="get marketing ref key data"/>
+        </dependencies>    
+    </job>
+    
+    <job name="get page and traffic classification" type="executeBash" 
+         command="echo get page and traffic classification &#62;&#62; /tmp/test1.log"
+            region="na"> 
+                <parameters>
+            <keyvalue key="date" value="${datekey}"/>
+        </parameters>
+        <dependencies>
+            <dependent name="get first page view sessions"/>
+            <dependent name="get expired deal pages"/>
+        </dependencies>    
+    </job>
+
+    <job name="get referrer query string" type="executeBash" 
+         command="echo get referrer query string &#62;&#62; /tmp/test1.log"
+            region="na"> 
+                    <parameters>
+            <keyvalue key="date" value="${datekey}"/>
+        </parameters>
+        <dependencies>
+            <dependent name="get first page view sessions"/>
+        </dependencies>
+    </job>
+
+    <job name="get first pv all data" type="executeBash" 
+         command="echo get first pv all data &#62;&#62; /tmp/test1.log"
+            region="na"> 
+                    <parameters>
+            <keyvalue key="date" value="${datekey}"/>
+        </parameters>
+        <dependencies>
+            <dependent name="get marketing ref key attributes"/>
+             <dependent name="get page and traffic classification"/>
+             <dependent name="get referrer query string"/>
+        </dependencies>
+    </job>
+
+    <job name="get orders data" type="executeBash" 
+         command="echo get orders data &#62;&#62; /tmp/test1.log"
+            region="na"> 
+                                <parameters>
+            <keyvalue key="date" value="${datekey}"/>
+        </parameters>
+        <dependencies>
+            <dependent name="get hive session counts"/>
+            <dependent name="get orders tmp"/>
+        </dependencies>
+    </job>    
+
+
+    <job name="get new subscriptions" type="executeBash" 
+         command="echo get new subscriptions &#62;&#62; /tmp/test1.log"
+            region="na"> 
+                                <parameters>
+            <keyvalue key="date" value="${datekey}"/>
+        </parameters>
+    </job>    
+
+    <job name="get new subscribers" type="executeBash" 
+         command="echo get new subscribers &#62;&#62; /tmp/test1.log"
+            region="na"> 
+                                <parameters>
+            <keyvalue key="date" value="${datekey}"/>
+        </parameters>
+        <dependencies>
+            <dependent name="get first page view sessions"/>
+        </dependencies>
+    </job>
+
+
+    <job name="get new subscribers and subscriptions" type="executeBash" 
+         command="echo get new subscribers and subscriptions &#62;&#62; /tmp/test1.log"
+            region="na"> 
+                                <parameters>
+            <keyvalue key="date" value="${datekey}"/>
+        </parameters>
+        <dependencies>
+            <dependent name="get new subscribers"/>
+            <dependent name="get new subscriptions"/>
+            <dependent name="get first page view sessions"/>
+        </dependencies>
+    </job>
+
+
+    <job name="get na cube" type="executeBash" 
+         command="echo get na cube &#62;&#62; /tmp/test1.log"
+            region="na"> 
+                                <parameters>
+            <keyvalue key="date" value="${datekey}"/>
+        </parameters>
+        <dependencies>
+            <dependent name="get new subscribers and subscriptions"/>
+            <dependent name="get page and traffic classification"/>
+            <dependent name="get orders data"/>
+            <dependent name="get marketing ref key attributes"/>
+            <dependent name="get first pv all data"/>
+        </dependencies>
+    </job>
+
+    <job name="get na experiments cube" type="executeBash" 
+         command="echo get na experiments cube &#62;&#62; /tmp/test1.log"
+            region="na"> 
+                                <parameters>
+            <keyvalue key="date" value="${datekey}"/>
+        </parameters>
+        <dependencies>
+            <dependent name="get new subscribers and subscriptions"/>
+            <dependent name="get page and traffic classification"/>
+            <dependent name="get orders data"/>
+            <dependent name="get marketing ref key attributes"/>
+            <dependent name="get first pv all data"/>
+            <dependent name="get experiments data"/>
+        </dependencies>
+    </job>
+
+
+</Knowledge_base>

@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "express": "= 3.5.1",
+    "jquery": "= 2.1.0",
+    "mysql": ">= 2.0.0-rc2",
+    "path": "= 0.4.9",
+    "socket.io": ">= 0.9.16",
+    "forever": ">= 0.10.11",
+    "java": "= 0.4.2"
+  }
+}
