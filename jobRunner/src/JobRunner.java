@@ -5,9 +5,9 @@ import java.util.concurrent.*;
         
 public class JobRunner {
     
-    static final String criticalMsg = "CRITICAL in Knowledge Base: ";
-    static final String startingMsg = "STARTING the Knowledge Base updates: ";
-    static final String successMsg = "SUCCESSFULLY FINISHED the Knowledge Base updates: ";
+    static final String criticalMsg = "CRITICAL in <project>: ";
+    static final String startingMsg = "STARTING the <project> updates: ";
+    static final String successMsg = "SUCCESSFULLY FINISHED the <projecy>  updates: ";
     
     //this one should be in configuration
     static public String pathToScripts = "";
