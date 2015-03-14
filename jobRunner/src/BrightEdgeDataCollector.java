@@ -35,7 +35,7 @@ import org.xml.sax.SAXException;
  */
 public class BrightEdgeDataCollector extends JobObject{
 
-    private static final String authString = "vparonyan@groupon.com" + ":" + "Group0nDub1";
+    private static final String authString = "vparonyan@domain.com" + ":" + "Group0nDub1";
     private static final String authStringEnc = Base64.encodeBytes(authString.getBytes());
     
     private final HashMap<String, String> IdToDomain = new HashMap();
@@ -122,7 +122,7 @@ public class BrightEdgeDataCollector extends JobObject{
     private void parseDomainXml(String xml) throws ParserConfigurationException, SAXException, IOException, Exception {
         /*
         <domains xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://api.brightedge.com/2.0" xsi:schemaLocation="http://api.brightedge.com/2.0 http://api.brightedge.com/2.0/api.xsd">
-            <domain id="23849.3872">groupon.com</domain>
+            <domain id="23849.3872">domain.com</domain>
         </domains>
         */
         LoggerHelper.logInfoStart(BrightEdgeDataCollector.class.getName());
@@ -200,8 +200,8 @@ public class BrightEdgeDataCollector extends JobObject{
           </ranking>
           <ranking keyword="Atlanta">
             <ranks>
-              <rank week="201425" country="us" url="www.groupon.com/local/atlanta" searchengine="bing">28</rank>
-              <rank week="201425" country="us" url="www.groupon.com/local/atlanta" searchengine="google">66</rank>
+              <rank week="201425" country="us" url="www.domain.com/local/atlanta" searchengine="bing">28</rank>
+              <rank week="201425" country="us" url="www.domain.com/local/atlanta" searchengine="google">66</rank>
             </ranks>
           </ranking>
         </rankings>
@@ -248,7 +248,7 @@ public class BrightEdgeDataCollector extends JobObject{
             for (Element e: rankList) {
                 KeywordData k = new KeywordData();
                 
-                //<rank week="201425" country="us" url="www.groupon.com/local/atlanta" searchengine="bing">28</rank>
+                //<rank week="201425" country="us" url="www.domain.com/local/atlanta" searchengine="bing">28</rank>
                 if (!e.hasAttribute("week") ||
                     !e.hasAttribute("country") ||
                     !e.hasAttribute("searchengine")) {

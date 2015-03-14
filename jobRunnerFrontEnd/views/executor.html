@@ -153,7 +153,7 @@
     <script type="text/javascript" src="../thirdParty/js/jquery-1.10.2.min.js"></script>
 
     <script>
-        var cmdLineTemplate = "java%java_args% -jar /var/groupon/apps/job_runner/jobRunner/current/dist/Job-runner.jar%env%%region%%start_day%%end_day%%jobs%%date_range%";
+        var cmdLineTemplate = "java%java_args% -jar <path to job runners path>/dist/Job-runner.jar%env%%region%%start_day%%end_day%%jobs%%date_range%";
 
         function executeJob() {
             $.post(

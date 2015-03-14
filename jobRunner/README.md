@@ -7,7 +7,7 @@ Installation
 -------------
 Clone this repo to your local machine
 
-    git clone git@github.groupondev.com:da/WBR-cubes.git
+    git clone git@github.domaindev.com:da/WBR-cubes.git
 
 Install required ruby gems
 
